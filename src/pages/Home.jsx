@@ -1,11 +1,14 @@
-import React from 'react';
+import Benefits from "../components/homepage/Benefits";
+import HeroSection from "../components/homepage/HeroSection";
 
 const Home = () => {
-    return (
-        <div>
-            <h1>Welcome to the Home Page</h1>
-        </div>
-    );
+  return (
+    <div>
+      <HeroSection />
+      <Benefits />
+      {/* Other sections will go here */}
+    </div>
+  );
 };
 
 export default Home;
