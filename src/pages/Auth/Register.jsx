@@ -5,10 +5,10 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import insuranceAnimation from "../../assets/LottieAnimations/insurance-login.json";
-import useAuth from "../../hooks/UseAuth";
+import useAuth from "../../hooks/useAuth";
 
 const Register = () => {
-  const { createUser, setUser, googleLogin, updateProfileInfo } = useAuth();
+  const { createUser, setUser, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -111,12 +111,29 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      // Step 1: Create the user account
       const result = await createUser(formData.email, formData.password);
       const user = result.user;
-      setUser(user);
+      console.log("User registered:", user);
 
-      // Update profile with name and photo
-      await updateProfileInfo(formData.name, formData.photo || null);
+      // Step 2: Update profile directly with Firebase updateProfile
+      if (formData.name || formData.photo) {
+        const { updateProfile } = await import("firebase/auth");
+
+        await updateProfile(user, {
+          displayName: formData.name || null,
+          photoURL: formData.photo || null,
+        });
+
+        console.log("Profile updated successfully");
+      }
+
+      // Step 3: Set the updated user in context
+      setUser({
+        ...user,
+        displayName: formData.name,
+        photoURL: formData.photo || null,
+      });
 
       toast.success(
         "Welcome to LifeSure! 🎉 Your account has been created successfully!",
@@ -170,7 +187,7 @@ const Register = () => {
         autoClose: 3000,
       });
 
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Google registration error:", error);
 
@@ -344,7 +361,7 @@ const Register = () => {
                 >
                   <path
                     fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                     clipRule="evenodd"
                   />
                 </svg>
@@ -741,52 +758,6 @@ const Register = () => {
           </div>
         </div>
       </div>
-
-      {/* Custom CSS for animations */}
-      <style jsx>{`
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          10%,
-          30%,
-          50%,
-          70%,
-          90% {
-            transform: translateX(-2px);
-          }
-          20%,
-          40%,
-          60%,
-          80% {
-            transform: translateX(2px);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .hover\\:shadow-3xl:hover {
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-      `}</style>
     </div>
   );
 };

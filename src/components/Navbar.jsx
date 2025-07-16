@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "react-toastify";
-import UseAuth from "../hooks/UseAuth";
+import UseAuth from "../hooks/useAuth";
 
 const Navbar = () => {
   const { user, logOut, loading } = UseAuth();
@@ -87,11 +87,11 @@ const Navbar = () => {
                     <div className="flex items-center space-x-3 px-4 py-2 border border-gray-200 rounded-full hover:border-blue-300 hover:shadow-md transition-all duration-200">
                       <img
                         className="h-8 w-8 rounded-full object-cover border-2 border-blue-100"
-                        src={user.photoURL || "https://via.placeholder.com/40"}
+                        src={
+                          user?.photoURL ||
+                          "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                        }
                         alt={user.displayName || "User"}
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/40";
-                        }}
                       />
                       <div className="text-left">
                         <div className="text-sm font-medium text-gray-900 truncate max-w-32">
@@ -319,10 +319,14 @@ const Navbar = () => {
                   <div className="flex-shrink-0">
                     <img
                       className="h-12 w-12 rounded-full border-2 border-blue-100"
-                      src={user.photoURL || "https://via.placeholder.com/48"}
-                      alt={user.displayName || "User"}
+                      src={
+                        user?.photoURL ||
+                        "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                      }
+                      alt={user?.displayName || "User"}
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/48";
+                        e.target.src =
+                          "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp";
                       }}
                     />
                   </div>

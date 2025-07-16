@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import insuranceAnimation from "../../assets/LottieAnimations/insurance-login.json";
-import useAuth from "../../hooks/UseAuth";
+import useAuth from "../../hooks/useAuth";
 
 const Login = () => {
   const { login, googleLogin, loading } = useAuth();
@@ -532,52 +532,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-      {/* Custom CSS for animations */}
-      <style jsx>{`
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          10%,
-          30%,
-          50%,
-          70%,
-          90% {
-            transform: translateX(-2px);
-          }
-          20%,
-          40%,
-          60%,
-          80% {
-            transform: translateX(2px);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .hover\\:shadow-3xl:hover {
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-      `}</style>
     </div>
   );
 };
