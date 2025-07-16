@@ -1,5 +1,5 @@
-import Benefits from "../components/homepage/Benefits";
-import HeroSection from "../components/homepage/HeroSection";
+import Benefits from "../../components/homepage/Benefits";
+import HeroSection from "../../components/homepage/HeroSection";
 
 const Home = () => {
   return (

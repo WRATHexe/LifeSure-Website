@@ -1,7 +1,6 @@
 import { Outlet } from "react-router";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
-
+import Footer from "../components/shared/Footer";
+import Navbar from "../components/shared/Navbar";
 const RootLayout = () => {
   return (
     <div className="min-h-screen w-full flex flex-col">

@@ -6,9 +6,11 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import insuranceAnimation from "../../assets/LottieAnimations/insurance-login.json";
 import useAuth from "../../hooks/useAuth";
+import useAxios from "../../hooks/useAxios";
 
 const Login = () => {
-  const { login, googleLogin, loading } = useAuth();
+  const { login, googleLogin } = useAuth();
+  const axios = useAxios();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/dashboard";
@@ -58,6 +60,24 @@ const Login = () => {
     }
   };
 
+  // Simple function to save user to database (for Google login)
+  const saveUserToDB = async (firebaseUser, provider = "google") => {
+    try {
+      const userData = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
+        provider,
+      };
+
+      const response = await axios.post("/users", userData);
+      console.log("User saved to database:", response.data);
+    } catch (error) {
+      console.error("Error saving user to database:", error);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -66,20 +86,12 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password);
+      console.log("User logged in:", result.user);
 
-      // Store remember me preference
-      if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-      }
-
-      toast.success("Welcome back to LifeSure! 🎉", {
+      toast.success("Welcome back! 🎉 Login successful!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
 
       navigate(from, { replace: true });
@@ -113,9 +125,13 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await googleLogin();
+      const result = await googleLogin();
+      console.log("Google login successful:", result.user);
 
-      toast.success("Google login successful! Welcome to LifeSure! 🎉", {
+      // Save Google user to database (will get customer role if new user)
+      await saveUserToDB(result.user, "google");
+
+      toast.success("Welcome! 🎉 Google login successful!", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -431,7 +447,7 @@ const Login = () => {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={isLoading || loading}
+              disabled={isLoading}
               className="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
             >
               {isLoading ? (
@@ -494,7 +510,7 @@ const Login = () => {
           {/* Google Login Button */}
           <button
             onClick={handleGoogle}
-            disabled={isLoading || loading}
+            disabled={isLoading}
             className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 hover:shadow-md"
             type="button"
           >

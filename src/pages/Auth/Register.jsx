@@ -6,10 +6,12 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import insuranceAnimation from "../../assets/LottieAnimations/insurance-login.json";
 import useAuth from "../../hooks/useAuth";
+import useAxios from "../../hooks/useAxios";
 
 const Register = () => {
   const { createUser, setUser, googleLogin } = useAuth();
   const navigate = useNavigate();
+  const axios = useAxios();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -103,6 +105,19 @@ const Register = () => {
     }
   };
 
+  // Save user to database
+  const saveUserToDB = async (firebaseUser, provider = "email") => {
+    const userData = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
+      provider,
+    };
+
+    await axios.post("/users", userData);
+  };
+
   const RegisterHandler = async (e) => {
     e.preventDefault();
 
@@ -111,12 +126,12 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Step 1: Create the user account
+      // Step 1: Create the user account with Firebase
       const result = await createUser(formData.email, formData.password);
       const user = result.user;
       console.log("User registered:", user);
 
-      // Step 2: Update profile directly with Firebase updateProfile
+      // Step 2: Update Firebase profile if name or photo provided
       if (formData.name || formData.photo) {
         const { updateProfile } = await import("firebase/auth");
 
@@ -128,7 +143,17 @@ const Register = () => {
         console.log("Profile updated successfully");
       }
 
-      // Step 3: Set the updated user in context
+      // Step 3: Save user to database (will get customer role automatically)
+      await saveUserToDB(
+        {
+          ...user,
+          displayName: formData.name,
+          photoURL: formData.photo || null,
+        },
+        "email"
+      );
+
+      // Step 4: Update local user state
       setUser({
         ...user,
         displayName: formData.name,
@@ -180,6 +205,10 @@ const Register = () => {
     try {
       const result = await googleLogin();
       const user = result.user;
+
+      // Save Google user to database (will get customer role automatically)
+      await saveUserToDB(user, "google");
+
       setUser(user);
 
       toast.success("Welcome to LifeSure! 🎉 Google registration successful!", {
