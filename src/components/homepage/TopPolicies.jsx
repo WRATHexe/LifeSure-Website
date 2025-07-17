@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { FaArrowRight, FaFire, FaShieldAlt, FaSpinner } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import useAxios from "../../hooks/useAxios";
 import PolicyCard from "../PolicyCard";

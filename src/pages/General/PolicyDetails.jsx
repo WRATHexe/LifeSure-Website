@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   FaArrowLeft,
   FaClock,
@@ -11,7 +11,7 @@ import {
   FaUsers,
   FaUserTie,
 } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 
@@ -20,34 +20,32 @@ const PolicyDetails = () => {
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
 
-  const [policy, setPolicy] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch policy details using TanStack Query
+  const {
+    data: policy,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["policy", id],
+    queryFn: async () => {
+      const response = await axiosSecure.get(`/policies/${id}`);
 
-  // Fetch policy details
-  useEffect(() => {
-    const fetchPolicyDetails = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axiosSecure.get(`/policies/${id}`);
-
-        if (response.data.success) {
-          setPolicy(response.data.policy);
-        } else {
-          throw new Error(response.data.message || "Policy not found");
-        }
-      } catch (error) {
-        console.error("Error fetching policy details:", error);
-        toast.error("Failed to load policy details");
-        navigate("/Policies");
-      } finally {
-        setIsLoading(false);
+      if (response.data.success) {
+        return response.data.policy;
+      } else {
+        throw new Error(response.data.message || "Policy not found");
       }
-    };
-
-    if (id) {
-      fetchPolicyDetails();
-    }
-  }, [id, axiosSecure, navigate]);
+    },
+    enabled: !!id, // Only run query if id exists
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    onError: (error) => {
+      console.error("Error fetching policy details:", error);
+      toast.error("Failed to load policy details");
+      navigate("/Policies");
+    },
+  });
 
   // Utility functions
   const formatCurrency = (amount) => {
@@ -80,7 +78,7 @@ const PolicyDetails = () => {
     );
   }
 
-  if (!policy) {
+  if (isError || !policy) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -89,7 +87,7 @@ const PolicyDetails = () => {
             Policy Not Found
           </h3>
           <p className="text-gray-600 mb-6">
-            The policy you're looking for doesn't exist.
+            {error?.message || "The policy you're looking for doesn't exist."}
           </p>
           <button
             onClick={() => navigate("/Policies")}
