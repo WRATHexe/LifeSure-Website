@@ -9,7 +9,6 @@ import Home from "../pages/General/Home";
 import PrivateRoute from "./PrivateRoute";
 
 // Dashboard Pages
-import AddPolicy from "../pages/Dashboard/Admin/addPolicy";
 import AdminPolicies from "../pages/Dashboard/Admin/AdminPolicies";
 import AdminAgents from "../pages/Dashboard/Admin/Agents";
 import AdminApplications from "../pages/Dashboard/Admin/Applications";
@@ -79,10 +78,6 @@ export const router = createBrowserRouter([
       {
         path: "admin/policies",
         element: <AdminPolicies />,
-      },
-      {
-        path: "admin/policies/add",
-        element: <AddPolicy />,
       },
       {
         path: "admin/transactions",
