@@ -1,5 +1,6 @@
 // filepath: d:\Hero Batch 11\Assignments\Assignment 12\LifeSure-Client\src\pages\General\Allpolicies.jsx
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -17,61 +18,57 @@ import PolicyCard from "../../components/PolicyCard";
 import useAxios from "../../hooks/useAxios";
 
 const AllPolicies = () => {
-  const [policies, setPolicies] = useState([]);
   const [filteredPolicies, setFilteredPolicies] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
 
   const axios = useAxios();
-
   const POLICIES_PER_PAGE = 6;
 
-  // Fetch policies from backend
-  const fetchPolicies = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  // Fetch policies using TanStack Query
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["policies"],
+    queryFn: async () => {
       const response = await axios.get("/policies");
-
       if (response.data.success) {
-        const transformedPolicies = response.data.policies.map((policy) => ({
+        return response.data.policies.map((policy) => ({
           ...policy,
           id: policy._id || policy.id,
         }));
-
-        setPolicies(transformedPolicies);
-
-        // Extract unique categories
-        const uniqueCategories = [
-          ...new Set(
-            transformedPolicies
-              .map((policy) => policy.category)
-              .filter((category) => category && category.trim() !== "")
-          ),
-        ].sort();
-
-        setCategories(["All", ...uniqueCategories]);
       } else {
         throw new Error(response.data.message || "Failed to fetch policies");
       }
-    } catch (error) {
-      console.error("Error fetching policies:", error);
-      toast.error("Failed to load policies. Please try again.");
-      setPolicies([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [axios]);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
+  // Handle error toast
   useEffect(() => {
-    fetchPolicies();
-  }, [fetchPolicies]);
+    if (isError) {
+      toast.error("Failed to load policies. Please try again.");
+    }
+  }, [isError]);
+
+  // Extract categories when data changes
+  useEffect(() => {
+    if (data) {
+      const uniqueCategories = [
+        ...new Set(
+          data
+            .map((policy) => policy.category)
+            .filter((category) => category && category.trim() !== "")
+        ),
+      ].sort();
+      setCategories(["All", ...uniqueCategories]);
+    }
+  }, [data]);
 
   // Filter policies
   useEffect(() => {
-    let filtered = [...policies];
+    if (!data) return;
+    let filtered = [...data];
 
     // Filter by category
     if (selectedCategory !== "All") {
@@ -92,7 +89,7 @@ const AllPolicies = () => {
 
     setFilteredPolicies(filtered);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [policies, selectedCategory, searchTerm]);
+  }, [data, selectedCategory, searchTerm]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
@@ -124,6 +121,25 @@ const AllPolicies = () => {
             <FaSpinner className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
             <p className="text-gray-600 text-lg">Loading policies...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg mb-4">
+            {error?.message || "Failed to load policies."}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -173,7 +189,7 @@ const AllPolicies = () => {
                   Total Policies
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {policies.length}
+                  {filteredPolicies.length}
                 </p>
               </div>
             </div>
@@ -203,9 +219,11 @@ const AllPolicies = () => {
                   Starting From
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {policies.length > 0
+                  {filteredPolicies.length > 0
                     ? formatCurrency(
-                        Math.min(...policies.map((p) => p.basePremium || 0))
+                        Math.min(
+                          ...filteredPolicies.map((p) => p.basePremium || 0)
+                        )
                       )
                     : "$0"}
                 </p>
@@ -242,7 +260,8 @@ const AllPolicies = () => {
                     {category}{" "}
                     {category !== "All" &&
                       `(${
-                        policies.filter((p) => p.category === category).length
+                        filteredPolicies.filter((p) => p.category === category)
+                          .length
                       })`}
                   </option>
                 ))}
@@ -253,7 +272,8 @@ const AllPolicies = () => {
           {/* Results info */}
           {(searchTerm || selectedCategory !== "All") && (
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredPolicies.length} of {policies.length} policies
+              Showing {filteredPolicies.length} of {filteredPolicies.length}{" "}
+              policies
               {searchTerm && <span> matching "{searchTerm}"</span>}
               {selectedCategory !== "All" && (
                 <span> in {selectedCategory}</span>

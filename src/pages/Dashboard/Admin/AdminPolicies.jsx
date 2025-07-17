@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   FaCalendarAlt,
@@ -20,9 +21,6 @@ import Modal from "../../../components/Modal/Modal";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 const AdminPolicies = () => {
-  const [policies, setPolicies] = useState([]);
-  const [categories, setCategories] = useState(["All Categories"]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(null);
@@ -31,9 +29,101 @@ const AdminPolicies = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState(null);
-  const [formLoading, setFormLoading] = useState(false);
 
   const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient();
+
+  // Fetch policies using TanStack Query
+  const {
+    data: policies = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["adminPolicies"],
+    queryFn: async () => {
+      const response = await axiosSecure.get("/policies");
+
+      if (response.data.success) {
+        return response.data.policies.map((policy) => ({
+          ...policy,
+          id: policy._id || policy.id,
+        }));
+      } else {
+        throw new Error(response.data.message || "Failed to fetch policies");
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: (error) => {
+      console.error("Error fetching policies:", error);
+      toast.error("Failed to load policies. Please try again.");
+    },
+  });
+
+  // Add Policy Mutation
+  const addPolicyMutation = useMutation({
+    mutationFn: async (policyData) => {
+      const response = await axiosSecure.post("/policies", policyData);
+      if (response.data.success) {
+        return response.data.policy;
+      } else {
+        throw new Error(response.data.error || "Failed to create policy");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Policy created successfully! 🎉");
+      queryClient.invalidateQueries(["adminPolicies"]);
+      setShowAddModal(false);
+      addForm.reset();
+    },
+    onError: (error) => {
+      console.error("Error adding policy:", error);
+      toast.error(error.response?.data?.error || "Failed to add policy");
+    },
+  });
+
+  // Update Policy Mutation
+  const updatePolicyMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      const response = await axiosSecure.put(`/policies/${id}`, data);
+      if (response.data.success) {
+        return response.data.policy;
+      } else {
+        throw new Error(response.data.error || "Failed to update policy");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Policy updated successfully! ✅");
+      queryClient.invalidateQueries(["adminPolicies"]);
+      setShowEditModal(false);
+      setEditingPolicy(null);
+      editForm.reset();
+    },
+    onError: (error) => {
+      console.error("Error updating policy:", error);
+      toast.error(error.response?.data?.error || "Failed to update policy");
+    },
+  });
+
+  // Delete Policy Mutation
+  const deletePolicyMutation = useMutation({
+    mutationFn: async (policyId) => {
+      const response = await axiosSecure.delete(`/policies/${policyId}`);
+      if (response.data.success) {
+        return policyId;
+      } else {
+        throw new Error(response.data.error || "Failed to delete policy");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["adminPolicies"]);
+    },
+    onError: (error) => {
+      console.error("Error deleting policy:", error);
+      toast.error(error.response?.data?.error || "Failed to delete policy");
+    },
+  });
 
   // Category options for React Select
   const categoryOptions = [
@@ -95,7 +185,7 @@ const AdminPolicies = () => {
   });
 
   // Extract unique categories from policies data
-  const extractCategoriesFromPolicies = (policiesData) => {
+  const extractCategoriesFromPolicies = useCallback((policiesData) => {
     const uniqueCategories = [
       ...new Set(
         policiesData
@@ -105,46 +195,10 @@ const AdminPolicies = () => {
     ].sort();
 
     return ["All Categories", ...uniqueCategories];
-  };
+  }, []);
 
-  // Fetch policies from backend
-  const fetchPolicies = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await axiosSecure.get("/policies");
-
-      if (response.data.success) {
-        const transformedPolicies = response.data.policies.map((policy) => ({
-          ...policy,
-          id: policy._id || policy.id,
-        }));
-
-        setPolicies(transformedPolicies || []);
-        const dynamicCategories =
-          extractCategoriesFromPolicies(transformedPolicies);
-        setCategories(dynamicCategories);
-      } else {
-        throw new Error(response.data.message || "Failed to fetch policies");
-      }
-    } catch (error) {
-      console.error("Error fetching policies:", error);
-      toast.error("Failed to load policies. Please try again.");
-      setPolicies([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [axiosSecure]);
-
-  useEffect(() => {
-    fetchPolicies();
-  }, [fetchPolicies]);
-
-  useEffect(() => {
-    if (policies.length > 0) {
-      const updatedCategories = extractCategoriesFromPolicies(policies);
-      setCategories(updatedCategories);
-    }
-  }, [policies]);
+  // Get categories from policies
+  const categories = extractCategoriesFromPolicies(policies);
 
   // Filter policies
   const filteredPolicies = policies.filter((policy) => {
@@ -161,57 +215,39 @@ const AdminPolicies = () => {
 
   // 🎯 Handle adding new policy
   const handleAddPolicy = async (data) => {
-    try {
-      setFormLoading(true);
-
-      // Validate age range
-      if (parseInt(data.minAge) >= parseInt(data.maxAge)) {
-        toast.error("Maximum age must be greater than minimum age!");
-        return;
-      }
-
-      // Validate coverage range
-      if (parseFloat(data.coverageMin) >= parseFloat(data.coverageMax)) {
-        toast.error("Maximum coverage must be greater than minimum coverage!");
-        return;
-      }
-
-      const transformedData = {
-        title: data.title,
-        category: data.category?.value || "",
-        description: data.description,
-        minAge: parseInt(data.minAge),
-        maxAge: parseInt(data.maxAge),
-        coverageMin: parseFloat(data.coverageMin),
-        coverageMax: parseFloat(data.coverageMax),
-        duration: data.duration?.value || "",
-        basePremium: parseFloat(data.basePremium),
-        imageUrl: data.imageUrl || "",
-        status: "Active",
-        applicationsCount: 0,
-      };
-
-      const response = await axiosSecure.post("/policies", transformedData);
-
-      if (response.data.success) {
-        toast.success("Policy created successfully! 🎉");
-        setShowAddModal(false);
-        addForm.reset();
-        fetchPolicies(); // Refresh data
-      } else {
-        throw new Error(response.data.error || "Failed to create policy");
-      }
-    } catch (error) {
-      console.error("Error adding policy:", error);
-      toast.error(error.response?.data?.error || "Failed to add policy");
-    } finally {
-      setFormLoading(false);
+    // Validate age range
+    if (parseInt(data.minAge) >= parseInt(data.maxAge)) {
+      toast.error("Maximum age must be greater than minimum age!");
+      return;
     }
+
+    // Validate coverage range
+    if (parseFloat(data.coverageMin) >= parseFloat(data.coverageMax)) {
+      toast.error("Maximum coverage must be greater than minimum coverage!");
+      return;
+    }
+
+    const transformedData = {
+      title: data.title,
+      category: data.category?.value || "",
+      description: data.description,
+      minAge: parseInt(data.minAge),
+      maxAge: parseInt(data.maxAge),
+      coverageMin: parseFloat(data.coverageMin),
+      coverageMax: parseFloat(data.coverageMax),
+      duration: data.duration?.value || "",
+      basePremium: parseFloat(data.basePremium),
+      imageUrl: data.imageUrl || "",
+      status: "Active",
+      applicationsCount: 0,
+    };
+
+    addPolicyMutation.mutate(transformedData);
   };
 
-  // 🎯 Handle editing policy - FIXED
+  // 🎯 Handle editing policy
   const handleEditPolicy = (policy) => {
-    console.log("Edit policy clicked:", policy); // Debug log
+    console.log("Edit policy clicked:", policy);
 
     setEditingPolicy(policy);
 
@@ -238,54 +274,35 @@ const AdminPolicies = () => {
   const handleUpdatePolicy = async (data) => {
     if (!editingPolicy) return;
 
-    try {
-      setFormLoading(true);
-
-      // Validate age range
-      if (parseInt(data.minAge) >= parseInt(data.maxAge)) {
-        toast.error("Maximum age must be greater than minimum age!");
-        return;
-      }
-
-      // Validate coverage range
-      if (parseFloat(data.coverageMin) >= parseFloat(data.coverageMax)) {
-        toast.error("Maximum coverage must be greater than minimum coverage!");
-        return;
-      }
-
-      const transformedData = {
-        title: data.title,
-        category: data.category?.value || "",
-        description: data.description,
-        minAge: parseInt(data.minAge),
-        maxAge: parseInt(data.maxAge),
-        coverageMin: parseFloat(data.coverageMin),
-        coverageMax: parseFloat(data.coverageMax),
-        duration: data.duration?.value || "",
-        basePremium: parseFloat(data.basePremium),
-        imageUrl: data.imageUrl || "",
-      };
-
-      const response = await axiosSecure.put(
-        `/policies/${editingPolicy._id}`,
-        transformedData
-      );
-
-      if (response.data.success) {
-        toast.success("Policy updated successfully! ✅");
-        setShowEditModal(false);
-        setEditingPolicy(null);
-        editForm.reset();
-        fetchPolicies(); // Refresh data
-      } else {
-        throw new Error(response.data.error || "Failed to update policy");
-      }
-    } catch (error) {
-      console.error("Error updating policy:", error);
-      toast.error(error.response?.data?.error || "Failed to update policy");
-    } finally {
-      setFormLoading(false);
+    // Validate age range
+    if (parseInt(data.minAge) >= parseInt(data.maxAge)) {
+      toast.error("Maximum age must be greater than minimum age!");
+      return;
     }
+
+    // Validate coverage range
+    if (parseFloat(data.coverageMin) >= parseFloat(data.coverageMax)) {
+      toast.error("Maximum coverage must be greater than minimum coverage!");
+      return;
+    }
+
+    const transformedData = {
+      title: data.title,
+      category: data.category?.value || "",
+      description: data.description,
+      minAge: parseInt(data.minAge),
+      maxAge: parseInt(data.maxAge),
+      coverageMin: parseFloat(data.coverageMin),
+      coverageMax: parseFloat(data.coverageMax),
+      duration: data.duration?.value || "",
+      basePremium: parseFloat(data.basePremium),
+      imageUrl: data.imageUrl || "",
+    };
+
+    updatePolicyMutation.mutate({
+      id: editingPolicy._id,
+      data: transformedData,
+    });
   };
 
   // 🎯 Handle deleting policy with SweetAlert
@@ -325,33 +342,21 @@ const AdminPolicies = () => {
     });
 
     if (result.isConfirmed) {
+      setDeleteLoading(policyId);
+
       try {
-        setDeleteLoading(policyId);
-
         const deleteId = policy._id || policyId;
-        const response = await axiosSecure.delete(`/policies/${deleteId}`);
+        await deletePolicyMutation.mutateAsync(deleteId);
 
-        if (response.data.success) {
-          setPolicies((prev) =>
-            prev.filter(
-              (policy) => policy.id !== policyId && policy._id !== policyId
-            )
-          );
-
-          await Swal.fire({
-            title: "Deleted Successfully!",
-            text: `${policy.title} has been removed from your policies.`,
-            icon: "success",
-            confirmButtonColor: "#059669",
-            timer: 3000,
-            timerProgressBar: true,
-          });
-        } else {
-          throw new Error(response.data.error || "Failed to delete policy");
-        }
+        await Swal.fire({
+          title: "Deleted Successfully!",
+          text: `${policy.title} has been removed from your policies.`,
+          icon: "success",
+          confirmButtonColor: "#059669",
+          timer: 3000,
+          timerProgressBar: true,
+        });
       } catch (error) {
-        console.error("Error deleting policy:", error);
-
         await Swal.fire({
           title: "Deletion Failed",
           text: error.response?.data?.error || "Failed to delete policy",
@@ -708,7 +713,7 @@ const AdminPolicies = () => {
         </div>
       </div>
 
-      {/* Form Actions - IMPROVED CLEAN STYLING */}
+      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 bg-gray-50 -mx-6 px-6 py-4 mt-6">
         <button
           type="button"
@@ -725,14 +730,22 @@ const AdminPolicies = () => {
         </button>
         <button
           type="submit"
-          disabled={formLoading}
+          disabled={
+            isEdit
+              ? updatePolicyMutation.isLoading
+              : addPolicyMutation.isLoading
+          }
           className={`flex items-center space-x-2 px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50 ${
             isEdit
               ? "bg-green-600 hover:bg-green-700 text-white"
               : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
         >
-          {formLoading ? (
+          {(
+            isEdit
+              ? updatePolicyMutation.isLoading
+              : addPolicyMutation.isLoading
+          ) ? (
             <>
               <FaSpinner className="animate-spin w-4 h-4" />
               <span>{isEdit ? "Updating..." : "Creating..."}</span>
@@ -755,6 +768,25 @@ const AdminPolicies = () => {
         <div className="text-center">
           <FaSpinner className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading policies...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 text-lg mb-4">
+            {error?.message || "Failed to load policies."}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -893,7 +925,7 @@ const AdminPolicies = () => {
         </div>
       </div>
 
-      {/* ✅ Policies Table - STATUS COLUMN REMOVED */}
+      {/* ✅ Policies Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -1036,7 +1068,7 @@ const AdminPolicies = () => {
         )}
       </div>
 
-      {/* ✅ Add Policy Modal - Using Modal Component */}
+      {/* ✅ Add Policy Modal */}
       <Modal
         isOpen={showAddModal}
         onClose={closeAddModal}
@@ -1049,7 +1081,7 @@ const AdminPolicies = () => {
         <PolicyForm form={addForm} onSubmit={handleAddPolicy} />
       </Modal>
 
-      {/* ✅ Edit Policy Modal - Using Modal Component */}
+      {/* ✅ Edit Policy Modal */}
       <Modal
         isOpen={showEditModal}
         onClose={closeEditModal}

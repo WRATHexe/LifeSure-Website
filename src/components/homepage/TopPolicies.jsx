@@ -1,39 +1,45 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FaArrowRight, FaFire, FaShieldAlt, FaSpinner } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import useAxios from "../../hooks/useAxios";
 import PolicyCard from "../PolicyCard";
 
 const TopPolicies = () => {
-  const [policies, setPolicies] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const axios = useAxios();
 
-  // Fetch top policies from database
-  useEffect(() => {
-    const fetchTopPolicies = async () => {
+  // Fetch top policies using TanStack Query
+  const {
+    data: policies = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["topPolicies"],
+    queryFn: async () => {
       try {
-        setIsLoading(true);
+        // First try to get top policies endpoint
         const response = await axios.get("/policies/top-policies");
 
         if (response.data && response.data.success) {
-          setPolicies(response.data.policies.slice(0, 6));
+          return response.data.policies.slice(0, 6);
         } else {
+          // Fallback to regular policies endpoint
           const fallbackResponse = await axios.get("/policies?limit=6");
           if (fallbackResponse.data && fallbackResponse.data.success) {
-            setPolicies(fallbackResponse.data.policies.slice(0, 6));
+            return fallbackResponse.data.policies.slice(0, 6);
           }
+          throw new Error("Failed to fetch policies");
         }
-      } catch {
-        setPolicies([]);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        // Show toast error
+        toast.error("Failed to load top policies");
+        throw error;
       }
-    };
-
-    fetchTopPolicies();
-  }, [axios]);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
 
   // Handle view all policies
   const handleViewAll = () => {
@@ -99,10 +105,14 @@ const TopPolicies = () => {
           <div className="text-center py-16">
             <FaShieldAlt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No Popular Policies Found
+              {isError
+                ? "Failed to Load Policies"
+                : "No Popular Policies Found"}
             </h3>
             <p className="text-gray-600">
-              Check back later for our most popular insurance policies.
+              {isError
+                ? "Please try again later or check your connection."
+                : "Check back later for our most popular insurance policies."}
             </p>
           </div>
         )}
