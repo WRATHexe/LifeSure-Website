@@ -3,7 +3,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import RootLayout from "../layouts/RootLayout";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
-import AllPolicies from "../pages/General/Allpolicies";
+import AllPolicies from "../pages/General/AllPolicies";
 import Blog from "../pages/General/blog";
 import Home from "../pages/General/Home";
 import PrivateRoute from "./PrivateRoute";
@@ -26,6 +26,7 @@ import DashboardOverview from "../pages/Dashboard/DashboardOverview";
 import DashboardHelp from "../pages/Dashboard/Help";
 import DashboardProfile from "../pages/Dashboard/Profile";
 import DashboardSettings from "../pages/Dashboard/Settings";
+import PolicyDetails from "../pages/General/PolicyDetails";
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: "Policies",
         element: <AllPolicies />,
+      },
+      {
+        path: "policies/:id",
+        element:<PolicyDetails />,
       },
       {
         path: "blog",
