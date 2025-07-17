@@ -5,13 +5,13 @@ import {
   FaBell,
   FaBlog,
   FaCalculator,
-  FaChartBar,
   FaClipboardList,
   FaCog,
   FaCreditCard,
   FaFileContract,
   FaHome,
   FaMoneyBillWave,
+  FaPlus,
   FaQuestionCircle,
   FaShieldAlt,
   FaSignOutAlt,
@@ -32,114 +32,96 @@ const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Determine user role
-  const userRole = user?.role || "customer";
-
-  // Navigation items based on user role
-  const getNavigationItems = () => {
-    const baseItems = [
-      {
-        name: "Dashboard",
-        href: "/dashboard",
-        icon: FaTachometerAlt,
-        current: location.pathname === "/dashboard",
-      },
-    ];
-
-    if (userRole === "admin") {
-      return [
-        ...baseItems,
-        {
-          name: "Manage Applications",
-          href: "/dashboard/admin/applications",
-          icon: FaClipboardList,
-          current: location.pathname.includes("/dashboard/admin/applications"),
-        },
-        {
-          name: "Manage Users",
-          href: "/dashboard/admin/users",
-          icon: FaUsers,
-          current: location.pathname.includes("/dashboard/admin/users"),
-        },
-        {
-          name: "Manage Policies",
-          href: "/dashboard/admin/policies",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/admin/policies"),
-        },
-        {
-          name: "Manage Transactions",
-          href: "/dashboard/admin/transactions",
-          icon: FaCreditCard,
-          current: location.pathname.includes("/dashboard/admin/transactions"),
-        },
-        {
-          name: "Manage Agents",
-          href: "/dashboard/admin/agents",
-          icon: FaUserTie,
-          current: location.pathname.includes("/dashboard/admin/agents"),
-        },
-        {
-          name: "Analytics",
-          href: "/dashboard/admin/analytics",
-          icon: FaChartBar,
-          current: location.pathname.includes("/dashboard/admin/analytics"),
-        },
-      ];
-    } else if (userRole === "agent") {
-      return [
-        ...baseItems,
-        {
-          name: "Assigned Customers",
-          href: "/dashboard/agent/customers",
-          icon: FaUsers,
-          current: location.pathname.includes("/dashboard/agent/customers"),
-        },
-        {
-          name: "Manage Blogs",
-          href: "/dashboard/agent/blogs",
-          icon: FaBlog,
-          current: location.pathname.includes("/dashboard/agent/blogs"),
-        },
-        {
-          name: "Create Blog",
-          href: "/dashboard/agent/blogs/create",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/agent/blogs/create"),
-        },
-      ];
-    } else {
-      return [
-        ...baseItems,
-        {
-          name: "My Policies",
-          href: "/dashboard/customer/policies",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/customer/policies"),
-        },
-        {
-          name: "Payment Status",
-          href: "/dashboard/customer/payments",
-          icon: FaMoneyBillWave,
-          current: location.pathname.includes("/dashboard/customer/payments"),
-        },
-        {
-          name: "Claims",
-          href: "/dashboard/customer/claims",
-          icon: FaShieldAlt,
-          current: location.pathname.includes("/dashboard/customer/claims"),
-        },
-        {
-          name: "Reviews",
-          href: "/dashboard/customer/reviews",
-          icon: FaStar,
-          current: location.pathname.includes("/dashboard/customer/reviews"),
-        },
-      ];
-    }
-  };
-
-  const navigationItems = getNavigationItems();
+  // All navigation items (no role filtering)
+  const navigationItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: FaTachometerAlt,
+      current: location.pathname === "/dashboard",
+    },
+    // Admin Pages
+    {
+      name: "Manage Applications",
+      href: "/dashboard/admin/applications",
+      icon: FaClipboardList,
+      current: location.pathname.includes("/dashboard/admin/applications"),
+    },
+    {
+      name: "Manage Users",
+      href: "/dashboard/admin/users",
+      icon: FaUsers,
+      current: location.pathname.includes("/dashboard/admin/users"),
+    },
+    {
+      name: "Manage Policies",
+      href: "/dashboard/admin/policies",
+      icon: FaFileContract,
+      current: location.pathname.includes("/dashboard/admin/policies"),
+    },
+    {
+      name: "Manage Transactions",
+      href: "/dashboard/admin/transactions",
+      icon: FaCreditCard,
+      current: location.pathname.includes("/dashboard/admin/transactions"),
+    },
+    {
+      name: "Manage Agents",
+      href: "/dashboard/admin/agents",
+      icon: FaUserTie,
+      current: location.pathname.includes("/dashboard/admin/agents"),
+    },
+    // Agent Pages
+    {
+      name: "Assigned Customers",
+      href: "/dashboard/agent/customers",
+      icon: FaUsers,
+      current: location.pathname.includes("/dashboard/agent/customers"),
+    },
+    {
+      name: "Manage Blogs",
+      href: "/dashboard/agent/blogs",
+      icon: FaBlog,
+      current: location.pathname.includes("/dashboard/agent/blogs"),
+    },
+    {
+      name: "Create Blog Post",
+      href: "/dashboard/agent/blogs/create",
+      icon: FaPlus,
+      current: location.pathname.includes("/dashboard/agent/blogs/create"),
+    },
+    // Customer Pages
+    {
+      name: "My Policies",
+      href: "/dashboard/customer/policies",
+      icon: FaFileContract,
+      current: location.pathname.includes("/dashboard/customer/policies"),
+    },
+    {
+      name: "Payment Status",
+      href: "/dashboard/customer/payments",
+      icon: FaMoneyBillWave,
+      current: location.pathname.includes("/dashboard/customer/payments"),
+    },
+    {
+      name: "Make Payment",
+      href: "/dashboard/customer/payment-page",
+      icon: FaCreditCard,
+      current: location.pathname.includes("/dashboard/customer/payment-page"),
+    },
+    {
+      name: "Claim Request",
+      href: "/dashboard/customer/claims",
+      icon: FaShieldAlt,
+      current: location.pathname.includes("/dashboard/customer/claims"),
+    },
+    {
+      name: "Reviews",
+      href: "/dashboard/customer/reviews",
+      icon: FaStar,
+      current: location.pathname.includes("/dashboard/customer/reviews"),
+    },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -204,31 +186,15 @@ const DashboardLayout = () => {
                     "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp";
                 }}
               />
-              <div
-                className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
-                  userRole === "admin"
-                    ? "bg-red-500"
-                    : userRole === "agent"
-                    ? "bg-green-500"
-                    : "bg-blue-500"
-                }`}
-              ></div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-green-500"></div>
             </div>
             <div className="ml-4 flex-1">
               <p className="text-lg font-semibold text-gray-900">
                 {user?.displayName || "User"}
               </p>
               <p className="text-sm text-gray-600">{user?.email}</p>
-              <div
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                  userRole === "admin"
-                    ? "bg-red-100 text-red-800"
-                    : userRole === "agent"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-blue-100 text-blue-800"
-                }`}
-              >
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 bg-blue-100 text-blue-800">
+                Dashboard User
               </div>
             </div>
           </div>
@@ -267,7 +233,7 @@ const DashboardLayout = () => {
           {/* Quick Links Section */}
           <div className="pt-8">
             <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-              Quick Links
+              Quick Actions
             </h3>
             <div className="space-y-2">
               <Link
@@ -293,6 +259,14 @@ const DashboardLayout = () => {
               >
                 <FaCalculator className="mr-3 w-4 h-4 text-gray-400 group-hover:text-green-600" />
                 Get Quote
+              </Link>
+              <Link
+                to="/agents"
+                className="group flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-purple-700 transition-colors duration-200"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <FaUserTie className="mr-3 w-4 h-4 text-gray-400 group-hover:text-purple-600" />
+                Find Agent
               </Link>
             </div>
           </div>
@@ -391,10 +365,10 @@ const DashboardLayout = () => {
                           <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
-                              New Policy Application
+                              Policy Premium Due
                             </p>
                             <p className="text-sm text-gray-600 mt-1">
-                              You have a new application pending review
+                              Your monthly premium payment is due in 3 days
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
                               2 hours ago
@@ -407,13 +381,29 @@ const DashboardLayout = () => {
                           <div className="w-2 h-2 rounded-full bg-green-500 mt-2 mr-3" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
-                              Payment Successful
+                              Claim Approved
                             </p>
                             <p className="text-sm text-gray-600 mt-1">
-                              Premium payment has been processed
+                              Your recent claim has been approved and processed
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
                               1 day ago
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
+                        <div className="flex items-start">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2 mr-3" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              Policy Update Available
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              New benefits have been added to your policy
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              3 days ago
                             </p>
                           </div>
                         </div>

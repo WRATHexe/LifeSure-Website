@@ -24,13 +24,24 @@ const Navbar = () => {
     }
   };
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Policies", path: "/policies" },
-    { name: "Agents", path: "/agents" },
-    { name: "Blog", path: "/blog" },
-    { name: "Contact", path: "/contact" },
-  ];
+  // Filter navigation links based on user authentication
+  const getNavLinks = () => {
+    const baseLinks = [
+      { name: "Home", path: "/" },
+      { name: "Policies", path: "/policies" },
+      { name: "Agents", path: "/agents" },
+      { name: "Blog", path: "/blog" },
+    ];
+
+    // Only add Dashboard if user is authenticated
+    if (user) {
+      baseLinks.push({ name: "Dashboard", path: "/dashboard" });
+    }
+
+    return baseLinks;
+  };
+
+  const navLinks = getNavLinks();
 
   if (loading) {
     return (
