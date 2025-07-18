@@ -13,7 +13,7 @@ const Login = () => {
   const axios = useAxios();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || "/dashboard";
+  const from = location.state?.from || "/";
 
   const [formData, setFormData] = useState({
     email: "",
