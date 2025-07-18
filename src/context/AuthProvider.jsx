@@ -36,14 +36,24 @@ const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
-  const updateProfileInfo = (name, photo) => {
+  // Fixed function name to match what Profile component expects
+  const updateUserProfile = (profileData) => {
     setLoading(true);
     return updateProfile(auth.currentUser, {
-      displayName: name,
-      photoURL: photo,
-    }).finally(() => {
-      setLoading(false);
-    });
+      displayName: profileData.displayName,
+      photoURL: profileData.photoURL,
+    })
+      .then(() => {
+        // Update the user state immediately after Firebase update
+        setUser((prevUser) => ({
+          ...prevUser,
+          displayName: profileData.displayName,
+          photoURL: profileData.photoURL,
+        }));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -64,7 +74,7 @@ const AuthProvider = ({ children }) => {
     logOut,
     login,
     googleLogin,
-    updateProfileInfo,
+    updateUserProfile,
   };
 
   return (

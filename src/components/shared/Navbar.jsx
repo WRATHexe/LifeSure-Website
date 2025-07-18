@@ -28,9 +28,9 @@ const Navbar = () => {
   const getNavLinks = () => {
     const baseLinks = [
       { name: "Home", path: "/" },
-      { name: "Policies", path: "/policies" },
+      { name: "All Policies", path: "/policies" },
       { name: "Agents", path: "/agents" },
-      { name: "Blog", path: "/blog" },
+      { name: "FAQs", path: "/blog" },
     ];
 
     // Only add Dashboard if user is authenticated

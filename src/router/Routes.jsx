@@ -24,9 +24,7 @@ import CustomerPayments from "../pages/Dashboard/Customer/Payments";
 import CustomerPolicies from "../pages/Dashboard/Customer/Policies";
 import CustomerReviews from "../pages/Dashboard/Customer/Reviews";
 import DashboardOverview from "../pages/Dashboard/DashboardOverview";
-import DashboardHelp from "../pages/Dashboard/Help";
-import DashboardProfile from "../pages/Dashboard/Profile";
-import DashboardSettings from "../pages/Dashboard/Settings";
+import Profile from "../pages/Dashboard/Profile";
 import PolicyDetails from "../pages/General/PolicyDetails";
 import QuotePage from "../pages/General/QuotePage";
 
@@ -85,6 +83,10 @@ export const router = createBrowserRouter([
         index: true,
         element: <DashboardOverview />,
       },
+      {
+        path: "profile",
+        element: <Profile />,
+      },
       // Admin Routes
       {
         path: "admin/applications",
@@ -139,19 +141,6 @@ export const router = createBrowserRouter([
       {
         path: "customer/reviews",
         element: <CustomerReviews />,
-      },
-      // General Dashboard Routes
-      {
-        path: "settings",
-        element: <DashboardSettings />,
-      },
-      {
-        path: "help",
-        element: <DashboardHelp />,
-      },
-      {
-        path: "profile",
-        element: <DashboardProfile />,
       },
     ],
   },
