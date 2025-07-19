@@ -2,23 +2,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-    FaCalendarAlt,
-    FaCheckCircle,
-    FaDollarSign,
-    FaExclamationCircle,
-    FaEye,
-    FaFileAlt,
-    FaInfoCircle,
-    FaShieldAlt,
-    FaSpinner,
-    FaStar,
-    FaTimes,
-    FaTimesCircle,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaDollarSign,
+  FaExclamationCircle,
+  FaFileAlt,
+  FaShieldAlt,
+  FaSpinner,
+  FaStar,
+  FaTimes,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import Modal from "../../../components/Modal/Modal";
 import useAuth from "../../../hooks/useAuth";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import ReviewModal from "./Reviews";
 
 const Policies = () => {
   const axiosSecure = useAxiosSecure();
@@ -26,7 +24,6 @@ const Policies = () => {
   const { user } = useAuth();
 
   const [selectedPolicy, setSelectedPolicy] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({
     rating: 0,
@@ -43,7 +40,7 @@ const Policies = () => {
     queryKey: ["user-policies", user?.uid],
     queryFn: async () => {
       const response = await axiosSecure.get(`/applications/user/${user?.uid}`);
-      // ✅ FIX: Access the applications array correctly
+
       return response.data.applications || []; // Make sure to return the applications array
     },
     enabled: !!user?.uid,
@@ -122,11 +119,6 @@ const Policies = () => {
     }).format(amount);
   };
 
-  const handleViewDetails = (policy) => {
-    setSelectedPolicy(policy);
-    setShowDetailsModal(true);
-  };
-
   const handleGiveReview = (policy) => {
     setReviewData({
       rating: 0,
@@ -135,10 +127,6 @@ const Policies = () => {
     });
     setSelectedPolicy(policy);
     setShowReviewModal(true);
-  };
-
-  const handleStarClick = (rating) => {
-    setReviewData((prev) => ({ ...prev, rating }));
   };
 
   const handleSubmitReview = (e) => {
@@ -285,10 +273,13 @@ const Policies = () => {
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Premium
+                        Coverage
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        Duration
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Premium
                       </th>
                     </tr>
                   </thead>
@@ -311,10 +302,6 @@ const Policies = () => {
                                   policy.policy?.title ||
                                   "N/A"}
                               </div>
-                              <div className="text-sm text-gray-500">
-                                ID:{" "}
-                                {policy.policyId || policy.policy?._id || "N/A"}
-                              </div>
                             </div>
                           </div>
                         </td>
@@ -332,6 +319,23 @@ const Policies = () => {
                           {getStatusBadge(policy.status || "Pending")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">
+                            {policy.coverageAmount || policy.policy?.coverageMax
+                              ? formatCurrency(
+                                  policy.coverageAmount ||
+                                    policy.policy?.coverageMax
+                                )
+                              : "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">
+                            {policy.duration ||
+                              policy.policy?.duration ||
+                              "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-900">
                             <FaDollarSign className="h-4 w-4 mr-1 text-gray-400" />
                             {policy.premium || policy.policy?.premium
@@ -343,13 +347,6 @@ const Policies = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleViewDetails(policy)}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                              <FaEye className="h-3 w-3 mr-1" />
-                              View Details
-                            </button>
                             {policy.status === "Approved" && (
                               <button
                                 onClick={() => handleGiveReview(policy)}
@@ -371,202 +368,16 @@ const Policies = () => {
         </div>
       </div>
 
-      {/* Policy Details Modal */}
-      <Modal
-        isOpen={showDetailsModal}
-        onClose={() => setShowDetailsModal(false)}
-        title="Policy Details"
-        subtitle={selectedPolicy?.policyName || selectedPolicy?.policy?.title}
-        icon={FaInfoCircle}
-        size="2xl"
-        headerColor="blue"
-      >
-        {selectedPolicy && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Policy Name
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {selectedPolicy.policyName ||
-                    selectedPolicy.policy?.title ||
-                    "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Policy ID
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {selectedPolicy.policyId ||
-                    selectedPolicy.policy?._id ||
-                    "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Coverage Amount
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {selectedPolicy.coverageAmount ||
-                  selectedPolicy.policy?.coverageAmount
-                    ? formatCurrency(
-                        selectedPolicy.coverageAmount ||
-                          selectedPolicy.policy?.coverageAmount
-                      )
-                    : "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Premium
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {selectedPolicy.premium || selectedPolicy.policy?.premium
-                    ? formatCurrency(
-                        selectedPolicy.premium || selectedPolicy.policy?.premium
-                      )
-                    : "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {selectedPolicy.duration ||
-                    selectedPolicy.policy?.duration ||
-                    "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Application Date
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                  {formatDate(
-                    selectedPolicy.submittedAt ||
-                      selectedPolicy.createdAt ||
-                      new Date()
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                {getStatusBadge(selectedPolicy.status || "Pending")}
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="w-full px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       {/* Review Modal */}
-      <Modal
+      <ReviewModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
-        title="Submit Review"
-        subtitle={selectedPolicy?.policyName || selectedPolicy?.policy?.title}
-        icon={FaStar}
-        size="2xl"
-        headerColor="green"
-      >
-        {selectedPolicy && (
-          <form onSubmit={handleSubmitReview} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Rate your experience *
-              </label>
-              <div className="flex items-center space-x-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => handleStarClick(star)}
-                    className={`text-3xl transition-all duration-200 hover:scale-110 ${
-                      star <= reviewData.rating
-                        ? "text-yellow-400 drop-shadow-sm"
-                        : "text-gray-300 hover:text-yellow-200"
-                    }`}
-                  >
-                    <FaStar />
-                  </button>
-                ))}
-                <span className="ml-3 text-sm text-gray-600">
-                  {reviewData.rating > 0 &&
-                    `${reviewData.rating} star${
-                      reviewData.rating > 1 ? "s" : ""
-                    }`}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Share your feedback *
-              </label>
-              <textarea
-                value={reviewData.feedback}
-                onChange={(e) =>
-                  setReviewData((prev) => ({
-                    ...prev,
-                    feedback: e.target.value,
-                  }))
-                }
-                rows="5"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                placeholder="Tell us about your experience with this policy or the agent who helped you..."
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Your review will be displayed as a testimonial on our website.
-              </p>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowReviewModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitReviewMutation.isLoading}
-                className="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
-              >
-                {submitReviewMutation.isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <FaSpinner className="animate-spin h-4 w-4" />
-                  </div>
-                ) : (
-                  "Submit Review"
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
+        policy={selectedPolicy}
+        reviewData={reviewData}
+        setReviewData={setReviewData}
+        onSubmit={handleSubmitReview}
+        isLoading={submitReviewMutation.isLoading}
+      />
     </>
   );
 };

@@ -73,7 +73,7 @@ const ApplicationForm = () => {
     const fetchPolicy = async () => {
       try {
         const response = await axiosSecure.get(`/policies/${policyId}`);
-        setPolicy(response.data);
+        setPolicy(response.data.policy);
       } catch {
         toast.error("Failed to load policy");
         navigate("/policies");
@@ -100,7 +100,7 @@ const ApplicationForm = () => {
         submittedAt: new Date().toISOString(),
       };
 
-      await axiosSecure.post("/applications", applicationData);
+      await axiosSecure.post("/customer/applications", applicationData);
 
       toast.success("Application submitted successfully!");
       navigate("/dashboard/customer/policies");

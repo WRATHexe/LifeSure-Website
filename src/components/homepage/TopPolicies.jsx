@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { FaArrowRight, FaFire, FaShieldAlt, FaSpinner } from "react-icons/fa";
 import { useNavigate } from "react-router";
-import { toast } from "react-toastify";
 import useAxios from "../../hooks/useAxios";
 import PolicyCard from "../PolicyCard";
 
@@ -17,24 +16,18 @@ const TopPolicies = () => {
   } = useQuery({
     queryKey: ["topPolicies"],
     queryFn: async () => {
-      try {
-        // First try to get top policies endpoint
-        const response = await axios.get("/policies/top-policies");
+      // First try to get top policies endpoint
+      const response = await axios.get("/policies/top-policies");
 
-        if (response.data && response.data.success) {
-          return response.data.policies.slice(0, 6);
-        } else {
-          // Fallback to regular policies endpoint
-          const fallbackResponse = await axios.get("/policies?limit=6");
-          if (fallbackResponse.data && fallbackResponse.data.success) {
-            return fallbackResponse.data.policies.slice(0, 6);
-          }
-          throw new Error("Failed to fetch policies");
+      if (response.data && response.data.success) {
+        return response.data.policies.slice(0, 6);
+      } else {
+        // Fallback to regular policies endpoint
+        const fallbackResponse = await axios.get("/policies?limit=6");
+        if (fallbackResponse.data && fallbackResponse.data.success) {
+          return fallbackResponse.data.policies.slice(0, 6);
         }
-      } catch (error) {
-        // Show toast error
-        toast.error("Failed to load top policies");
-        throw error;
+        throw new Error("Failed to fetch policies");
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -66,6 +66,29 @@ const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Get the Firebase ID token
+        const token = await user.getIdToken();
+        // Store it in localStorage
+        localStorage.setItem("access-token", token);
+      } else {
+        // Remove token if logged out
+        localStorage.removeItem("access-token");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync the token with the server on initial load
+  useEffect(() => {
+    auth.currentUser?.getIdToken(true).then((token) => {
+      localStorage.setItem("access-token", token);
+    });
+  }, []);
+
   const authData = {
     user,
     loading,

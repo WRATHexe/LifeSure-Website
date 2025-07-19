@@ -1,26 +1,23 @@
 import axios from "axios";
-import useAuth from "./useAuth";
 
 const axiosSecure = axios.create({
-  baseURL: `https://lifesure-c296f.web.app`, // Updated to match your server port
+  baseURL: `https://life-sure-server.vercel.app/`,
 });
 
-const useAxiosSecure = () => {
-  const { user } = useAuth();
-
-  axiosSecure.interceptors.request.use(
-    (config) => {
-      // Only add token if user exists and has accessToken
-      if (user?.accessToken) {
-        config.headers.Authorization = `Bearer ${user.accessToken}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
+// Add the interceptor ONCE
+axiosSecure.interceptors.request.use(
+  (config) => {
+    // Get the latest token from localStorage
+    const token = localStorage.getItem("access-token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  );
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
+const useAxiosSecure = () => {
   return axiosSecure;
 };
 
