@@ -6,7 +6,7 @@ A modern, full-featured insurance management platform for customers, agents, and
 
 ## 🚀 Live Site
 
-[https://lifesure-client.vercel.app/](https://lifesure-client.vercel.app/)
+[https://lifesure-client/](https://lifesure-c296f.web.app/)
 
 ---
 

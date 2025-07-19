@@ -2,7 +2,7 @@ import axios from "axios";
 import useAuth from "./useAuth";
 
 const axiosSecure = axios.create({
-  baseURL: `http://localhost:3000`, // Updated to match your server port
+  baseURL: `https://lifesure-c296f.web.app`, // Updated to match your server port
 });
 
 const useAxiosSecure = () => {
