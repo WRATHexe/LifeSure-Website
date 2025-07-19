@@ -5,11 +5,7 @@ import {
   FaCalendarAlt,
   FaCheck,
   FaEnvelope,
-  FaEye,
   FaFileAlt,
-  FaFilter,
-  FaSearch,
-  FaSort,
   FaSpinner,
   FaTimes,
   FaUser,
@@ -22,29 +18,18 @@ const Applications = () => {
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("applicationDate");
-  const [sortOrder, setSortOrder] = useState("desc");
   const [selectedAgent, setSelectedAgent] = useState({});
 
-  // Fetch applications
+  // Fetch applications (no params)
   const {
     data: applications = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["applications", searchTerm, statusFilter, sortBy, sortOrder],
+    queryKey: ["applications"],
     queryFn: async () => {
-      const response = await axiosSecure.get("/applications", {
-        params: {
-          search: searchTerm,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-          sortBy,
-          sortOrder,
-        },
-      });
-      return response.data;
+      const response = await axiosSecure.get("/admin/applications");
+      return response.data.applications || [];
     },
   });
 
@@ -52,8 +37,8 @@ const Applications = () => {
   const { data: agents = [] } = useQuery({
     queryKey: ["agents"],
     queryFn: async () => {
-      const response = await axiosSecure.get("/agents");
-      return response.data;
+      const response = await axiosSecure.get("/admin/agents");
+      return response.data.agents || [];
     },
   });
 
@@ -61,7 +46,7 @@ const Applications = () => {
   const assignAgentMutation = useMutation({
     mutationFn: async ({ applicationId, agentId }) => {
       const response = await axiosSecure.patch(
-        `/applications/${applicationId}/assign-agent`,
+        `/admin/applications/${applicationId}/assign-agent`,
         {
           agentId,
         }
@@ -82,7 +67,7 @@ const Applications = () => {
   const rejectApplicationMutation = useMutation({
     mutationFn: async (applicationId) => {
       const response = await axiosSecure.patch(
-        `/applications/${applicationId}/reject`
+        `/admin/applications/${applicationId}/reject`
       );
       return response.data;
     },
@@ -144,22 +129,14 @@ const Applications = () => {
     });
   };
 
-  const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      app.applicantName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.policyName?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  // Remove filtering and search, just use all applications
+  const safeApplications = Array.isArray(applications) ? applications : [];
 
   if (isLoading) {
     return (
       <>
         <Helmet>
-          <title>Loading Applications | LifeSure Admin</title>
+          <title>Applications | LifeSure Admin</title>
         </Helmet>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -175,7 +152,7 @@ const Applications = () => {
     return (
       <>
         <Helmet>
-          <title>Error | LifeSure Admin</title>
+          <title>Applications | LifeSure Admin</title>
         </Helmet>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
@@ -190,9 +167,7 @@ const Applications = () => {
   return (
     <>
       <Helmet>
-        <title>
-          Manage Applications ({applications.length}) | LifeSure Admin
-        </title>
+        <title>Applications | LifeSure Admin</title>
         <meta
           name="description"
           content="Manage insurance policy applications, assign agents, and update application status"
@@ -216,28 +191,31 @@ const Applications = () => {
             {[
               {
                 title: "Total Applications",
-                value: applications.length,
+                value: safeApplications.length,
                 icon: FaFileAlt,
                 color: "blue",
               },
               {
                 title: "Pending",
-                value: applications.filter((app) => app.status === "Pending")
-                  .length,
+                value: safeApplications.filter(
+                  (app) => app.status === "Pending"
+                ).length,
                 icon: FaSpinner,
                 color: "yellow",
               },
               {
                 title: "Approved",
-                value: applications.filter((app) => app.status === "Approved")
-                  .length,
+                value: safeApplications.filter(
+                  (app) => app.status === "Approved"
+                ).length,
                 icon: FaCheck,
                 color: "green",
               },
               {
                 title: "Rejected",
-                value: applications.filter((app) => app.status === "Rejected")
-                  .length,
+                value: safeApplications.filter(
+                  (app) => app.status === "Rejected"
+                ).length,
                 icon: FaTimes,
                 color: "red",
               },
@@ -260,65 +238,6 @@ const Applications = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Filters and Search */}
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search applications..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Status Filter */}
-              <div className="relative">
-                <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
-
-              {/* Sort By */}
-              <div className="relative">
-                <FaSort className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="applicationDate">Application Date</option>
-                  <option value="applicantName">Applicant Name</option>
-                  <option value="policyName">Policy Name</option>
-                  <option value="status">Status</option>
-                </select>
-              </div>
-
-              {/* Sort Order */}
-              <div>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="desc">Newest First</option>
-                  <option value="asc">Oldest First</option>
-                </select>
-              </div>
-            </div>
           </div>
 
           {/* Applications Table */}
@@ -348,7 +267,7 @@ const Applications = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredApplications.length === 0 ? (
+                  {safeApplications.length === 0 ? (
                     <tr>
                       <td
                         colSpan="6"
@@ -358,13 +277,11 @@ const Applications = () => {
                         <p className="text-lg font-medium">
                           No applications found
                         </p>
-                        <p className="text-sm">
-                          Try adjusting your search or filters
-                        </p>
+                        <p className="text-sm">No data available.</p>
                       </td>
                     </tr>
                   ) : (
-                    filteredApplications.map((application) => (
+                    safeApplications.map((application) => (
                       <tr key={application._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -388,9 +305,6 @@ const Applications = () => {
                           <div className="text-sm font-medium text-gray-900">
                             {application.policyName || "N/A"}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {application.policyId || "N/A"}
-                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-900">
@@ -406,10 +320,20 @@ const Applications = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {application.assignedAgent ? (
                             <div className="flex items-center">
-                              <FaUserTie className="h-4 w-4 mr-2 text-green-600" />
-                              <span className="text-sm text-gray-900">
-                                {application.assignedAgent.name}
-                              </span>
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                  <FaUserTie className="h-5 w-5 text-green-600" />
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {application.assignedAgentName}
+                                </div>
+                                <div className="text-sm text-gray-500 flex items-center">
+                                  <FaEnvelope className="h-3 w-3 mr-1" />
+                                  {application.assignedAgentEmail}
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <span className="text-sm text-gray-500">
@@ -435,8 +359,8 @@ const Applications = () => {
                                   >
                                     <option value="">Select Agent</option>
                                     {agents.map((agent) => (
-                                      <option key={agent._id} value={agent._id}>
-                                        {agent.name}
+                                      <option key={agent.uid} value={agent.uid}>
+                                        {agent.displayName || agent.email}
                                       </option>
                                     ))}
                                   </select>
@@ -478,18 +402,6 @@ const Applications = () => {
                                 )}
                               </button>
                             )}
-
-                            {/* View Details */}
-                            <button
-                              onClick={() => {
-                                // Navigate to application details
-                                // navigate(`/dashboard/admin/applications/${application._id}`);
-                              }}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                              <FaEye className="h-3 w-3 mr-1" />
-                              View
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -499,8 +411,6 @@ const Applications = () => {
               </table>
             </div>
           </div>
-
-          {/* Pagination could be added here */}
         </div>
       </div>
     </>
