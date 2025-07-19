@@ -70,36 +70,39 @@ const Policies = () => {
   });
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      Pending: {
+    const config = {
+      pending: {
         bg: "bg-yellow-100",
         text: "text-yellow-800",
         icon: FaExclamationCircle,
         border: "border-yellow-200",
+        label: "Pending",
       },
-      Approved: {
+      approved: {
         bg: "bg-green-100",
         text: "text-green-800",
         icon: FaCheckCircle,
         border: "border-green-200",
+        label: "Approved",
       },
-      Rejected: {
+      rejected: {
         bg: "bg-red-100",
         text: "text-red-800",
         icon: FaTimesCircle,
         border: "border-red-200",
+        label: "Rejected",
       },
     };
 
-    const config = statusConfig[status] || statusConfig.Pending;
-    const Icon = config.icon;
+    const c = config[status?.toLowerCase()] || config.pending;
+    const Icon = c.icon;
 
     return (
       <span
-        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${config.bg} ${config.text} ${config.border}`}
+        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${c.bg} ${c.text} ${c.border}`}
       >
         <Icon className="w-4 h-4 mr-1" />
-        {status}
+        {c.label}
       </span>
     );
   };
@@ -209,19 +212,19 @@ const Policies = () => {
               },
               {
                 title: "Pending",
-                value: policies.filter((p) => p.status === "Pending").length,
+                value: policies.filter((p) => p.status === "pending").length,
                 icon: FaExclamationCircle,
                 color: "yellow",
               },
               {
                 title: "Approved",
-                value: policies.filter((p) => p.status === "Approved").length,
+                value: policies.filter((p) => p.status === "approved").length,
                 icon: FaCheckCircle,
                 color: "green",
               },
               {
                 title: "Rejected",
-                value: policies.filter((p) => p.status === "Rejected").length,
+                value: policies.filter((p) => p.status === "rejected").length,
                 icon: FaTimesCircle,
                 color: "red",
               },
@@ -347,7 +350,7 @@ const Policies = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            {policy.status === "Approved" && (
+                            {policy.status === "approved" && (
                               <button
                                 onClick={() => handleGiveReview(policy)}
                                 className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

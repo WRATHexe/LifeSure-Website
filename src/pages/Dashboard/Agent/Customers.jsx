@@ -1,17 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 const statusColors = {
-  Pending: "bg-blue-100 text-blue-700",
-  Approved: "bg-green-100 text-green-700",
-  Rejected: "bg-red-100 text-red-700",
+  pending: "bg-blue-100 text-blue-700",
+  approved: "bg-green-100 text-green-700",
+  rejected: "bg-red-100 text-red-700",
 };
 
 const Customers = () => {
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
-  const [selected, setSelected] = useState(null);
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ["agent-customers"],
@@ -23,7 +21,7 @@ const Customers = () => {
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }) => {
-      await axiosSecure.patch(`/agent/customers/${id}/status`, { status });
+      await axiosSecure.patch(`/agent/applications/${id}/status`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["agent-customers"]);
@@ -49,21 +47,18 @@ const Customers = () => {
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Action
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="text-center py-10 text-gray-500">
+                <td colSpan={4} className="text-center py-10 text-gray-500">
                   Loading...
                 </td>
               </tr>
             ) : customers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-10 text-gray-500">
+                <td colSpan={4} className="text-center py-10 text-gray-500">
                   No customers found.
                 </td>
               </tr>
@@ -86,18 +81,10 @@ const Customers = () => {
                         statusColors[c.status] || ""
                       }`}
                     >
-                      <option value="Pending">Pending</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Rejected">Rejected</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
                     </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      className="px-3 py-1 bg-blue-600 text-white rounded text-xs"
-                      onClick={() => setSelected(c)}
-                    >
-                      View Details
-                    </button>
                   </td>
                 </tr>
               ))
@@ -105,30 +92,6 @@ const Customers = () => {
           </tbody>
         </table>
       </div>
-      {/* Modal for details */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-bold mb-2">{selected.name}</h3>
-            <p className="mb-1">
-              <span className="font-semibold">Email:</span> {selected.email}
-            </p>
-            <p className="mb-1">
-              <span className="font-semibold">Policies:</span>{" "}
-              {selected.policies?.join(", ")}
-            </p>
-            <p className="mb-1">
-              <span className="font-semibold">Status:</span> {selected.status}
-            </p>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
-              onClick={() => setSelected(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
