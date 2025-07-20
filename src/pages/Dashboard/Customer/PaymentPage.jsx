@@ -17,7 +17,7 @@ import useAuth from "../../../hooks/useAuth";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 // Initialize Stripe (replace with your publishable key)
-const stripePromise = loadStripe("import.meta.env.VITE_PAY_KEY");
+const stripePromise = loadStripe(import.meta.env.VITE_PAY_KEY);
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -25,8 +25,8 @@ const PaymentPage = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
-  const policyId = searchParams.get("policyId");
-  const amount = searchParams.get("amount");
+  // Get applicationId from URL
+  const applicationId = searchParams.get("applicationId");
 
   const [stripe, setStripe] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
@@ -51,30 +51,36 @@ const PaymentPage = () => {
     initializeStripe();
   }, []);
 
-  // Fetch policy details
+  // Fetch application details
   const {
-    data: policy,
+    data: application,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["policy-details", policyId],
+    queryKey: ["application-details", applicationId],
     queryFn: async () => {
-      const response = await axiosSecure.get(`/policies/${policyId}`);
-      return response.data.policy;
+      const response = await axiosSecure.get(`/applications/${applicationId}`);
+      return response.data.application;
     },
-    enabled: !!policyId,
+    enabled: !!applicationId,
   });
 
   // Create payment intent
   useEffect(() => {
     const createPaymentIntent = async () => {
+      if (
+        !application?.basePremium ||
+        isNaN(application.basePremium) ||
+        Number(application.basePremium) <= 0
+      ) {
+        toast.error("Invalid payment amount");
+        return;
+      }
       try {
         const response = await axiosSecure.post("/create-payment-intent", {
-          amount: parseFloat(amount),
-          policyId,
-          userId: user?.uid,
+          amount: Number(application.basePremium),
+          policyId: application.policyId,
         });
-
         setClientSecret(response.data.clientSecret);
       } catch (error) {
         console.error("Error creating payment intent:", error);
@@ -82,10 +88,15 @@ const PaymentPage = () => {
       }
     };
 
-    if (amount && policyId && user?.uid) {
+    if (
+      application &&
+      application.basePremium &&
+      application.policyId &&
+      user?.uid
+    ) {
       createPaymentIntent();
     }
-  }, [amount, policyId, user?.uid, axiosSecure]);
+  }, [application, user?.uid, axiosSecure]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -129,16 +140,16 @@ const PaymentPage = () => {
         paymentIntent: {
           id: `pi_${Date.now()}`,
           status: "succeeded",
-          amount: Math.round(parseFloat(amount) * 100),
+          amount: Math.round(Number(application.basePremium) * 100),
         },
       };
 
       // Record payment in database
       await axiosSecure.post("/confirm-payment", {
         paymentIntentId: paymentResult.paymentIntent.id,
-        policyId,
+        policyId: application.policyId,
         userId: user?.uid,
-        amount: parseFloat(amount),
+        amount: Number(application.basePremium),
       });
 
       return paymentResult;
@@ -203,11 +214,16 @@ const PaymentPage = () => {
 
   // Redirect if no payment data
   useEffect(() => {
-    if (!policyId || !amount) {
+    if (
+      !applicationId ||
+      !application?.basePremium ||
+      isNaN(application.basePremium) ||
+      Number(application.basePremium) <= 0
+    ) {
       toast.error("Invalid payment link");
       navigate("/dashboard/customer/payments");
     }
-  }, [policyId, amount, navigate]);
+  }, [applicationId, application, navigate]);
 
   if (isLoading) {
     return (
@@ -225,7 +241,7 @@ const PaymentPage = () => {
     );
   }
 
-  if (error || !policy) {
+  if (error || !application) {
     return (
       <>
         <Helmet>
@@ -273,12 +289,14 @@ const PaymentPage = () => {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Amount Paid:</span>
                   <span className="font-semibold">
-                    {formatCurrency(amount)}
+                    {formatCurrency(application.basePremium)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Policy:</span>
-                  <span className="font-semibold">{policy?.title}</span>
+                  <span className="font-semibold">
+                    {application.policyName}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Transaction ID:</span>
@@ -432,7 +450,9 @@ const PaymentPage = () => {
                     ) : (
                       <>
                         <FaLock className="w-5 h-5" />
-                        <span>Pay {formatCurrency(amount)}</span>
+                        <span>
+                          Pay {formatCurrency(application.basePremium)}
+                        </span>
                       </>
                     )}
                   </button>
@@ -454,7 +474,7 @@ const PaymentPage = () => {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">
-                        {policy?.title}
+                        {application.policyName}
                       </p>
                       <p className="text-sm text-gray-600">Premium Payment</p>
                     </div>
@@ -464,7 +484,7 @@ const PaymentPage = () => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-gray-600">Amount:</span>
                       <span className="font-semibold">
-                        {formatCurrency(amount)}
+                        {formatCurrency(application.basePremium)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
@@ -477,7 +497,7 @@ const PaymentPage = () => {
                           Total:
                         </span>
                         <span className="text-lg font-bold text-blue-600">
-                          {formatCurrency(amount)}
+                          {formatCurrency(application.basePremium)}
                         </span>
                       </div>
                     </div>

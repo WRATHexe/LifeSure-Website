@@ -38,8 +38,7 @@ const Payments = () => {
   } = useQuery({
     queryKey: ["user-payments", user?.uid],
     queryFn: async () => {
-      // Use the correct endpoint
-      const response = await axiosSecure.get(`/payments/user/${user?.uid}`);
+      const response = await axiosSecure.get(`/customer/payment-status`);
       return response.data.payments || [];
     },
     enabled: !!user?.uid,
@@ -107,10 +106,7 @@ const Payments = () => {
   };
 
   const handlePayNow = (payment) => {
-    // Use the customer-specific route
-    navigate(
-      `/dashboard/customer/payment-page?policyId=${payment.policyId}&amount=${payment.amount}`
-    );
+    navigate(`/dashboard/customer/payment-page?applicationId=${payment._id}`);
   };
 
   const handleViewDetails = (payment) => {
