@@ -20,8 +20,20 @@ import useAxiosSecure from "../../hooks/useAxiosSecure";
 const QuotePage = () => {
   const { policyId } = useParams();
   const navigate = useNavigate();
-  const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+
+  // Fetch user profile from DB (if logged in)
+  const { data: dbUser, isLoading: userLoading } = useQuery({
+    queryKey: ["db-user", user?.uid],
+    queryFn: async () => {
+      if (!user?.uid) return null;
+      const res = await axiosSecure.get(`/users/${user.uid}`);
+      return res.data.user;
+    },
+    enabled: !!user?.uid,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [calculating, setCalculating] = useState(false);
   const [quote, setQuote] = useState(null);
@@ -180,6 +192,18 @@ const QuotePage = () => {
     if (!user) {
       toast.info("Please login to apply for the policy");
       navigate("/login", { state: { from: `/application/${policyId}` } });
+      return;
+    }
+
+    // Wait for DB user to load
+    if (userLoading) {
+      toast.info("Checking your account...");
+      return;
+    }
+
+    // Only allow customers to apply
+    if (dbUser?.role !== "customer") {
+      toast.error("You must be logged in as a Customer to apply for a policy.");
       return;
     }
 

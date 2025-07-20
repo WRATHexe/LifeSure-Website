@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
@@ -19,6 +20,7 @@ const ApplicationForm = () => {
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
+  const queryClient = useQueryClient(); // Add this
 
   const [policy, setPolicy] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,9 @@ const ApplicationForm = () => {
       };
 
       await axiosSecure.post("/customer/applications", applicationData);
+
+      // Invalidate the user's policies query so Policies.jsx reloads automatically
+      queryClient.invalidateQueries(["user-policies", user?.uid]);
 
       toast.success("Application submitted successfully!");
       navigate("/dashboard/customer/policies");
