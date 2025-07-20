@@ -1,132 +1,66 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import {
   FaArrowLeft,
   FaBars,
   FaBlog,
-  FaClipboardList,
-  FaCreditCard,
-  FaFileContract,
   FaHome,
-  FaMoneyBillWave,
-  FaShieldAlt,
   FaSignOutAlt,
-  FaTachometerAlt,
   FaTimes,
   FaUsers,
-  FaUserTie,
 } from "react-icons/fa";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import UseAuth from "../hooks/useAuth";
 import useAxiosSecure from "../hooks/useAxiosSecure";
 
-const DashboardLayout = () => {
+const AgentDashboardLayout = () => {
   const { user, logOut } = UseAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const axiosSecure = useAxiosSecure(); // Add this
+  const axiosSecure = useAxiosSecure();
 
-  // Fetch user role from backend instead of Firebase user object
-  const { data: userProfile } = useQuery({
+  // Fetch user profile to check role
+  const { data: userProfile, isLoading } = useQuery({
     queryKey: ["user-profile", user?.uid],
     queryFn: async () => {
-      const response = await axiosSecure.get(`/users/${user?.uid}`);
-      return response.data;
+      const res = await axiosSecure.get(`/users/${user?.uid}`);
+      return res.data;
     },
     enabled: !!user?.uid,
     retry: 1,
   });
-  const userRole = userProfile?.user?.role || "customer";
 
-  // Navigation items based on user role
-  const getNavigationItems = () => {
-    const baseItems = [
-      {
-        name: "Dashboard",
-        href: "/dashboard",
-        icon: FaTachometerAlt,
-        current: location.pathname === "/dashboard",
-      },
-    ];
-
-    if (userRole === "admin") {
-      return [
-        ...baseItems,
-        {
-          name: "Manage Applications",
-          href: "/dashboard/admin/applications",
-          icon: FaClipboardList,
-          current: location.pathname.includes("/dashboard/admin/applications"),
-        },
-        {
-          name: "Manage Users",
-          href: "/dashboard/admin/users",
-          icon: FaUsers,
-          current: location.pathname.includes("/dashboard/admin/users"),
-        },
-        {
-          name: "Manage Policies",
-          href: "/dashboard/admin/policies",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/admin/policies"),
-        },
-        {
-          name: "Manage Transactions",
-          href: "/dashboard/admin/transactions",
-          icon: FaCreditCard,
-          current: location.pathname.includes("/dashboard/admin/transactions"),
-        },
-        {
-          name: "Manage Agents",
-          href: "/dashboard/admin/agents",
-          icon: FaUserTie,
-          current: location.pathname.includes("/dashboard/admin/agents"),
-        },
-      ];
-    } else if (userRole === "agent") {
-      return [
-        ...baseItems,
-        {
-          name: "Assigned Customers",
-          href: "/dashboard/agent/customers",
-          icon: FaUsers,
-          current: location.pathname.includes("/dashboard/agent/customers"),
-        },
-        {
-          name: "Manage Blogs",
-          href: "/dashboard/agent/blogs",
-          icon: FaBlog,
-          current: location.pathname.includes("/dashboard/agent/blogs"),
-        },
-      ];
-    } else {
-      return [
-        ...baseItems,
-        {
-          name: "My Policies",
-          href: "/dashboard/customer/policies",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/customer/policies"),
-        },
-        {
-          name: "Payment Status",
-          href: "/dashboard/customer/payments",
-          icon: FaMoneyBillWave,
-          current: location.pathname.includes("/dashboard/customer/payments"),
-        },
-        {
-          name: "Claims",
-          href: "/dashboard/customer/claims",
-          icon: FaShieldAlt,
-          current: location.pathname.includes("/dashboard/customer/claims"),
-        },
-      ];
+  // Redirect if not agent
+  useEffect(() => {
+    if (!isLoading && userProfile && userProfile.user?.role !== "agent") {
+      toast.error("Access denied. Agent role required.");
+      navigate("/");
     }
-  };
+  }, [isLoading, userProfile, navigate]);
 
-  const navigationItems = getNavigationItems();
+  const navigationItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard/agent",
+      icon: FaHome,
+      current: location.pathname === "/dashboard/agent",
+    },
+    {
+      name: "Assigned Customers",
+      href: "/dashboard/agent/customers",
+      icon: FaUsers,
+      current: location.pathname.includes("/dashboard/agent/customers"),
+    },
+    {
+      name: "Manage Blogs",
+      href: "/dashboard/agent/blogs",
+      icon: FaBlog,
+      current: location.pathname.includes("/dashboard/agent/blogs"),
+    },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -138,8 +72,21 @@ const DashboardLayout = () => {
     }
   };
 
+  // Dynamic page title based on route
+  const getPageTitle = () => {
+    if (location.pathname === "/dashboard/agent") return "Agent Dashboard";
+    const last = location.pathname.split("/").pop();
+    return (
+      (last?.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase()) ||
+        "Dashboard") + " | Agent"
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      <Helmet>
+        <title>{getPageTitle()} - LifeSure</title>
+      </Helmet>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -155,28 +102,28 @@ const DashboardLayout = () => {
         } lg:block`}
       >
         {/* Logo & Brand */}
-        <div className="flex items-center justify-between h-20 px-6 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 shadow-lg">
+        <div className="flex items-center justify-between h-20 px-6 bg-gradient-to-r from-green-600 via-green-700 to-green-800 shadow-lg">
           <Link to="/" className="flex items-center group">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-3 shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <span className="text-blue-600 font-bold text-xl">L</span>
+              <span className="text-green-600 font-bold text-xl">L</span>
             </div>
             <div>
               <span className="text-white text-xl font-bold block">
                 LifeSure
               </span>
-              <span className="text-blue-200 text-xs">Insurance Dashboard</span>
+              <span className="text-green-200 text-xs">Agent Dashboard</span>
             </div>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-white hover:text-blue-200 transition-colors duration-200"
+            className="lg:hidden text-white hover:text-green-200 transition-colors duration-200"
           >
             <FaTimes className="w-6 h-6" />
           </button>
         </div>
 
         {/* User Profile Section */}
-        <div className="p-6 bg-gradient-to-b from-blue-50 to-white border-b border-gray-200">
+        <div className="p-6 bg-gradient-to-b from-green-50 to-white border-b border-gray-200">
           <div className="flex items-center">
             <div className="relative">
               <img
@@ -184,38 +131,22 @@ const DashboardLayout = () => {
                   user?.photoURL ||
                   "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
                 }
-                alt={user?.displayName || "User"}
+                alt={user?.displayName || "Agent"}
                 className="w-16 h-16 rounded-full border-4 border-white shadow-lg"
                 onError={(e) => {
                   e.target.src =
                     "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp";
                 }}
               />
-              <div
-                className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
-                  userRole === "admin"
-                    ? "bg-red-500"
-                    : userRole === "agent"
-                    ? "bg-green-500"
-                    : "bg-blue-500"
-                }`}
-              ></div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white bg-green-500"></div>
             </div>
             <div className="ml-4 flex-1">
               <p className="text-lg font-semibold text-gray-900">
-                {user?.displayName || "User"}
+                {user?.displayName || "Agent"}
               </p>
               <p className="text-sm text-gray-600">{user?.email}</p>
-              <div
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                  userRole === "admin"
-                    ? "bg-red-100 text-red-800"
-                    : userRole === "agent"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-blue-100 text-blue-800"
-                }`}
-              >
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 bg-green-100 text-green-800">
+                Agent
               </div>
             </div>
           </div>
@@ -231,8 +162,8 @@ const DashboardLayout = () => {
                 to={item.href}
                 className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                   item.current
-                    ? "bg-blue-600 text-white shadow-lg transform scale-105"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:scale-105"
+                    ? "bg-green-600 text-white shadow-lg transform scale-105"
+                    : "text-gray-700 hover:bg-green-50 hover:text-green-700 hover:scale-105"
                 }`}
                 onClick={() => setSidebarOpen(false)}
               >
@@ -240,7 +171,7 @@ const DashboardLayout = () => {
                   className={`mr-4 w-5 h-5 ${
                     item.current
                       ? "text-white"
-                      : "text-gray-400 group-hover:text-blue-600"
+                      : "text-gray-400 group-hover:text-green-600"
                   }`}
                 />
                 {item.name}
@@ -259,19 +190,11 @@ const DashboardLayout = () => {
             <div className="space-y-2">
               <Link
                 to="/"
-                className="group flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-blue-700 transition-colors duration-200"
+                className="group flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-green-700 transition-colors duration-200"
                 onClick={() => setSidebarOpen(false)}
               >
-                <FaHome className="mr-3 w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                <FaHome className="mr-3 w-4 h-4 text-gray-400 group-hover:text-green-600" />
                 Back to Website
-              </Link>
-              <Link
-                to="/policies"
-                className="group flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-blue-700 transition-colors duration-200"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <FaFileContract className="mr-3 w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                Browse Policies
               </Link>
             </div>
           </div>
@@ -306,7 +229,7 @@ const DashboardLayout = () => {
               {/* Back to website button - visible on desktop */}
               <Link
                 to="/"
-                className="hidden lg:flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                className="hidden lg:flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
               >
                 <FaArrowLeft className="w-4 h-4 mr-2" />
                 Back to Website
@@ -316,8 +239,8 @@ const DashboardLayout = () => {
             {/* Page title */}
             <div className="flex-1 px-4">
               <h1 className="text-xl font-semibold text-gray-900">
-                {location.pathname === "/dashboard"
-                  ? "Dashboard Overview"
+                {location.pathname === "/dashboard/agent"
+                  ? "Agent Dashboard"
                   : location.pathname
                       .split("/")
                       .pop()
@@ -330,7 +253,7 @@ const DashboardLayout = () => {
             <div className="flex items-center space-x-4">
               {/* User profile */}
               <Link
-                to="/dashboard/profile"
+                to="/dashboard/agent/profile"
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 <img
@@ -338,7 +261,7 @@ const DashboardLayout = () => {
                     user?.photoURL ||
                     "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
                   }
-                  alt={user?.displayName || "User"}
+                  alt={user?.displayName || "Agent"}
                   className="w-8 h-8 rounded-full border border-gray-200"
                   onError={(e) => {
                     e.target.src =
@@ -346,7 +269,7 @@ const DashboardLayout = () => {
                   }}
                 />
                 <span className="hidden md:block text-sm font-medium text-gray-700">
-                  {user?.displayName || "User"}
+                  {user?.displayName || "Agent"}
                 </span>
               </Link>
             </div>
@@ -367,19 +290,19 @@ const DashboardLayout = () => {
             <div className="flex space-x-6 mt-2 sm:mt-0">
               <Link
                 to="/privacy"
-                className="hover:text-blue-600 transition-colors duration-200"
+                className="hover:text-green-600 transition-colors duration-200"
               >
                 Privacy Policy
               </Link>
               <Link
                 to="/terms"
-                className="hover:text-blue-600 transition-colors duration-200"
+                className="hover:text-green-600 transition-colors duration-200"
               >
                 Terms of Service
               </Link>
               <Link
                 to="/support"
-                className="hover:text-blue-600 transition-colors duration-200"
+                className="hover:text-green-600 transition-colors duration-200"
               >
                 Support
               </Link>
@@ -391,4 +314,4 @@ const DashboardLayout = () => {
   );
 };
 
-export default DashboardLayout;
+export default AgentDashboardLayout;

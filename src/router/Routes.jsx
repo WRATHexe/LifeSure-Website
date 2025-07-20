@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router";
-import DashboardLayout from "../layouts/DashboardLayout";
+import AdminDashboardLayout from "../layouts/AdminDashboardLayout";
+import AgentDashboardLayout from "../layouts/AgentDashboardLayout";
+import CustomerDashboardLayout from "../layouts/CustomerDashboardLayout";
 import RootLayout from "../layouts/RootLayout";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
@@ -15,15 +17,17 @@ import AdminAgents from "../pages/Dashboard/Admin/Agents";
 import AdminApplications from "../pages/Dashboard/Admin/Applications";
 import AdminTransactions from "../pages/Dashboard/Admin/Transactions";
 import AdminUsers from "../pages/Dashboard/Admin/Users";
-import AgentBlogs from "../pages/Dashboard/Agent/Blogs";
+import AdminDashboard from "../pages/Dashboard/AdminDashboard";
 import CreateBlogPost from "../pages/Dashboard/Agent/BlogFormModal";
+import AgentBlogs from "../pages/Dashboard/Agent/Blogs";
 import AgentCustomers from "../pages/Dashboard/Agent/Customers";
+import AgentDashboard from "../pages/Dashboard/AgentDashboard";
 import CustomerClaims from "../pages/Dashboard/Customer/Claims";
 import PaymentPage from "../pages/Dashboard/Customer/PaymentPage";
 import CustomerPayments from "../pages/Dashboard/Customer/Payments";
 import CustomerPolicies from "../pages/Dashboard/Customer/Policies";
 import CustomerReviews from "../pages/Dashboard/Customer/Reviews";
-import DashboardOverview from "../pages/Dashboard/DashboardOverview";
+import CustomerDashboard from "../pages/Dashboard/CustomerDashboard";
 import Profile from "../pages/Dashboard/Profile";
 import PolicyDetails from "../pages/General/PolicyDetails";
 import QuotePage from "../pages/General/QuotePage";
@@ -33,26 +37,11 @@ export const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      {
-        index: true,
-        element: <Home />,
-      },
-      {
-        path: "login",
-        element: <Login />,
-      },
-      {
-        path: "register",
-        element: <Register />,
-      },
-      {
-        path: "policies",
-        element: <AllPolicies />,
-      },
-      {
-        path: "policies/:id",
-        element: <PolicyDetails />,
-      },
+      { index: true, element: <Home /> },
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+      { path: "policies", element: <AllPolicies /> },
+      { path: "policies/:id", element: <PolicyDetails /> },
       {
         path: "application/:policyId",
         element: (
@@ -61,87 +50,63 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-      {
-        path: "blog",
-        element: <Blog />,
-      },
-      {
-        path: "quote/:policyId",
-        element: <QuotePage />,
-      },
+      { path: "blog", element: <Blog /> },
+      { path: "quote/:policyId", element: <QuotePage /> },
     ],
   },
+
+  // Admin Dashboard
   {
-    path: "/dashboard",
+    path: "/dashboard/admin",
     element: (
       <PrivateRoute>
-        <DashboardLayout />
+        <AdminDashboardLayout />
       </PrivateRoute>
     ),
     children: [
-      {
-        index: true,
-        element: <DashboardOverview />,
-      },
-      {
-        path: "profile",
-        element: <Profile />,
-      },
-      // Admin Routes
-      {
-        path: "admin/applications",
-        element: <AdminApplications />,
-      },
-      {
-        path: "admin/users",
-        element: <AdminUsers />,
-      },
-      {
-        path: "admin/policies",
-        element: <AdminPolicies />,
-      },
-      {
-        path: "admin/transactions",
-        element: <AdminTransactions />,
-      },
-      {
-        path: "admin/agents",
-        element: <AdminAgents />,
-      },
-      // Agent Routes
-      {
-        path: "agent/customers",
-        element: <AgentCustomers />,
-      },
-      {
-        path: "agent/blogs",
-        element: <AgentBlogs />,
-      },
-      {
-        path: "agent/blogs/create",
-        element: <CreateBlogPost />,
-      },
-      // Customer Routes
-      {
-        path: "customer/policies",
-        element: <CustomerPolicies />,
-      },
-      {
-        path: "customer/payments",
-        element: <CustomerPayments />,
-      },
-      {
-        path: "customer/payment-page",
-        element: <PaymentPage />,
-      },
-      {
-        path: "customer/claims",
-        element: <CustomerClaims />,
-      },
-      {
-        path: "customer/reviews",
-        element: <CustomerReviews />,
-      },
+      { index: true, element: <AdminDashboard /> },
+      { path: "applications", element: <AdminApplications /> },
+      { path: "users", element: <AdminUsers /> },
+      { path: "policies", element: <AdminPolicies /> },
+      { path: "transactions", element: <AdminTransactions /> },
+      { path: "agents", element: <AdminAgents /> },
+      { path: "profile", element: <Profile /> },
+    ],
+  },
+
+  // Agent Dashboard
+  {
+    path: "/dashboard/agent",
+    element: (
+      <PrivateRoute>
+        <AgentDashboardLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { index: true, element: <AgentDashboard /> },
+      { path: "customers", element: <AgentCustomers /> },
+      { path: "blogs", element: <AgentBlogs /> },
+      { path: "blogs/create", element: <CreateBlogPost /> },
+      { path: "profile", element: <Profile /> },
+    ],
+  },
+
+  // Customer Dashboard
+  {
+    path: "/dashboard/customer",
+    element: (
+      <PrivateRoute>
+        <CustomerDashboardLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { index: true, element: <CustomerDashboard /> },
+      { path: "policies", element: <CustomerPolicies /> },
+      { path: "payments", element: <CustomerPayments /> },
+      { path: "payment-page", element: <PaymentPage /> },
+      { path: "claims", element: <CustomerClaims /> },
+      { path: "reviews", element: <CustomerReviews /> },
+      { path: "profile", element: <Profile /> },
     ],
   },
 ]);

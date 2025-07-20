@@ -1,14 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import UseAuth from "../../hooks/useAuth";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 
 const Navbar = () => {
   const { user, logOut, loading } = UseAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
-
+  const axiosSecure = useAxiosSecure();
   const handleLogout = async () => {
     try {
       await logOut();
@@ -24,7 +26,18 @@ const Navbar = () => {
     }
   };
 
-  // Filter navigation links based on user authentication
+  // Fetch user role from backend
+  const { data: _userProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["user-profile", user?.uid],
+    queryFn: async () => {
+      const response = await axiosSecure.get(`/users/${user?.uid}`);
+      return response.data;
+    },
+    enabled: !!user?.uid,
+    retry: 1,
+  });
+
+  // Use the fetched role for navigation and menus
   const getNavLinks = () => {
     const baseLinks = [
       { name: "Home", path: "/" },
@@ -33,9 +46,16 @@ const Navbar = () => {
       { name: "Articles", path: "/blog" },
     ];
 
-    // Only add Dashboard if user is authenticated
-    if (user) {
-      baseLinks.push({ name: "Dashboard", path: "/dashboard" });
+    // Only add Dashboard if user and user.role are available
+    if (user && _userProfile?.user?.role) {
+      let dashboardPath = "";
+      if (_userProfile.user.role === "admin")
+        dashboardPath = "/dashboard/admin";
+      else if (_userProfile.user.role === "agent")
+        dashboardPath = "/dashboard/agent";
+      else if (_userProfile.user.role === "customer")
+        dashboardPath = "/dashboard/customer";
+      baseLinks.push({ name: "Dashboard", path: dashboardPath });
     }
 
     return baseLinks;
@@ -43,7 +63,8 @@ const Navbar = () => {
 
   const navLinks = getNavLinks();
 
-  if (loading) {
+  // Show loading if still fetching profile
+  if (loading || (user && !_userProfile?.user?.role) || profileLoading) {
     return (
       <nav className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-white/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -146,7 +167,13 @@ const Navbar = () => {
                       {/* Menu Items */}
                       <div className="py-1">
                         <Link
-                          to="/dashboard"
+                          to={
+                            _userProfile?.user?.role === "admin"
+                              ? "/dashboard/admin"
+                              : _userProfile?.user?.role === "agent"
+                              ? "/dashboard/agent"
+                              : "/dashboard/customer"
+                          }
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                           onClick={() => setIsProfileOpen(false)}
                         >
@@ -352,7 +379,13 @@ const Navbar = () => {
                 </div>
                 <div className="mt-3 px-2 space-y-1">
                   <Link
-                    to="/dashboard"
+                    to={
+                      _userProfile?.user?.role === "admin"
+                        ? "/dashboard/admin"
+                        : _userProfile?.user?.role === "agent"
+                        ? "/dashboard/agent"
+                        : "/dashboard/customer"
+                    }
                     className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
