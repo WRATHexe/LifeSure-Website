@@ -100,12 +100,6 @@ const DashboardLayout = () => {
           icon: FaBlog,
           current: location.pathname.includes("/dashboard/agent/blogs"),
         },
-        {
-          name: "Create Blog",
-          href: "/dashboard/agent/blogs/create",
-          icon: FaFileContract,
-          current: location.pathname.includes("/dashboard/agent/blogs/create"),
-        },
       ];
     } else {
       return [

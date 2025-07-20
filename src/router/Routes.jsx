@@ -16,7 +16,7 @@ import AdminApplications from "../pages/Dashboard/Admin/Applications";
 import AdminTransactions from "../pages/Dashboard/Admin/Transactions";
 import AdminUsers from "../pages/Dashboard/Admin/Users";
 import AgentBlogs from "../pages/Dashboard/Agent/Blogs";
-import CreateBlogPost from "../pages/Dashboard/Agent/CreateBlogPost";
+import CreateBlogPost from "../pages/Dashboard/Agent/BlogFormModal";
 import AgentCustomers from "../pages/Dashboard/Agent/Customers";
 import CustomerClaims from "../pages/Dashboard/Customer/Claims";
 import PaymentPage from "../pages/Dashboard/Customer/PaymentPage";

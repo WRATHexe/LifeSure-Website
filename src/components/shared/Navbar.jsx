@@ -30,7 +30,7 @@ const Navbar = () => {
       { name: "Home", path: "/" },
       { name: "All Policies", path: "/policies" },
       { name: "Agents", path: "/agents" },
-      { name: "FAQs", path: "/blog" },
+      { name: "Articles", path: "/blog" },
     ];
 
     // Only add Dashboard if user is authenticated
