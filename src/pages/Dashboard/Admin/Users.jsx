@@ -35,7 +35,7 @@ const Users = () => {
   // Promote/Demote user mutation
   const roleMutation = useMutation({
     mutationFn: async ({ uid, newRole }) => {
-      await axiosSecure.patch(`/admin/users/${uid}/role`, { newRole });
+      await axiosSecure.patch(`/admin/users/${uid}/role`, { Role: newRole });
     },
     onSuccess: () => {
       toast.success("Role updated!");
