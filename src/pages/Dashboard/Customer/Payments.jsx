@@ -306,9 +306,10 @@ const Payments = () => {
                                 <div className="text-sm font-medium text-gray-900">
                                   {payment.policyName}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                {/* Remove or comment out the line below to hide the ID */}
+                                {/* <div className="text-sm text-gray-500">
                                   ID: {payment.policyId}
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                           </td>

@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import useAuth from "../../../hooks/useAuth";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import ReviewModal from "./Reviews";
+import PdfDownloader from "./pdfDownloader";
 
 const Policies = () => {
   const axiosSecure = useAxiosSecure();
@@ -351,13 +352,16 @@ const Policies = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             {policy.status === "approved" && (
-                              <button
-                                onClick={() => handleGiveReview(policy)}
-                                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                              >
-                                <FaStar className="h-3 w-3 mr-1" />
-                                Give Review
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleGiveReview(policy)}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                  <FaStar className="h-3 w-3 mr-1" />
+                                  Give Review
+                                </button>
+                                <PdfDownloader policy={policy} user={user} />
+                              </>
                             )}
                           </div>
                         </td>

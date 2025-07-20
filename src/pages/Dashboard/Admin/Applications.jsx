@@ -12,6 +12,7 @@ import {
   FaUserTie,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
+import Modal from "../../../components/Modal/Modal";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
 const Applications = () => {
@@ -19,6 +20,10 @@ const Applications = () => {
   const queryClient = useQueryClient();
 
   const [selectedAgent, setSelectedAgent] = useState({});
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingAppId, setRejectingAppId] = useState(null);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackError, setFeedbackError] = useState("");
 
   // Fetch applications (no params)
   const {
@@ -65,14 +70,16 @@ const Applications = () => {
 
   // Reject application mutation
   const rejectApplicationMutation = useMutation({
-    mutationFn: async (applicationId) => {
+    mutationFn: async ({ applicationId, feedback }) => {
       const response = await axiosSecure.patch(
-        `/admin/applications/${applicationId}/reject`
+        `/admin/applications/${applicationId}/reject`,
+        { feedback }
       );
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Application rejected successfully!");
+      toast.success("Application rejected with feedback!");
+      setShowRejectModal(false); // <-- add this
       queryClient.invalidateQueries(["applications"]);
     },
     onError: (error) => {
@@ -89,12 +96,6 @@ const Applications = () => {
       return;
     }
     assignAgentMutation.mutate({ applicationId, agentId });
-  };
-
-  const handleRejectApplication = (applicationId) => {
-    if (window.confirm("Are you sure you want to reject this application?")) {
-      rejectApplicationMutation.mutate(applicationId);
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -386,9 +387,11 @@ const Applications = () => {
                             {/* Reject Button */}
                             {application.status === "Pending" && (
                               <button
-                                onClick={() =>
-                                  handleRejectApplication(application._id)
-                                }
+                                onClick={() => {
+                                  setRejectingAppId(application._id);
+                                  setShowRejectModal(true);
+                                  setFeedback(""); // reset feedback
+                                }}
                                 disabled={rejectApplicationMutation.isLoading}
                                 className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                               >
@@ -412,6 +415,74 @@ const Applications = () => {
             </div>
           </div>
         </div>
+
+        {/* Reject Application Modal */}
+        {showRejectModal && (
+          <Modal
+            isOpen={showRejectModal}
+            onRequestClose={() => setShowRejectModal(false)}
+            className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Reject Application
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Please provide a reason for rejection. This will be visible to the
+              applicant.
+            </p>
+            <textarea
+              value={feedback}
+              onChange={(e) => {
+                if (e.target.value.length <= 300) setFeedback(e.target.value);
+                if (e.target.value.trim()) setFeedbackError("");
+              }}
+              maxLength={300}
+              rows={4}
+              className={`w-full border rounded-md p-2 mb-1 focus:ring-2 focus:ring-blue-500 ${
+                feedbackError ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="Feedback is required"
+            />
+            <div className="flex justify-between items-center mb-2">
+              {feedbackError && (
+                <span className="text-red-500 text-xs">{feedbackError}</span>
+              )}
+              <span className="text-xs text-gray-400">
+                {feedback.length}/300
+              </span>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!feedback.trim()) {
+                    setFeedbackError("Feedback is required");
+                    toast.error("Feedback is required");
+                    return;
+                  }
+                  setFeedbackError("");
+                  rejectApplicationMutation.mutate({
+                    applicationId: rejectingAppId,
+                    feedback,
+                  });
+                }}
+                disabled={rejectApplicationMutation.isLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+              >
+                {rejectApplicationMutation.isLoading ? (
+                  <FaSpinner className="animate-spin h-4 w-4" />
+                ) : (
+                  "Reject Application"
+                )}
+              </button>
+            </div>
+          </Modal>
+        )}
       </div>
     </>
   );
