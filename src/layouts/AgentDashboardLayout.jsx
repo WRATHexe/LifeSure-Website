@@ -6,9 +6,11 @@ import {
   FaBars,
   FaBlog,
   FaHome,
+  FaQuestionCircle,
   FaSignOutAlt,
   FaTimes,
   FaUsers,
+  FaUserTie,
 } from "react-icons/fa";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "react-toastify";
@@ -49,6 +51,12 @@ const AgentDashboardLayout = () => {
       current: location.pathname === "/dashboard/agent",
     },
     {
+      name: "Profile",
+      href: "/dashboard/agent/profile",
+      icon: FaUserTie,
+      current: location.pathname === "/dashboard/agent/profile",
+    },
+    {
       name: "Assigned Customers",
       href: "/dashboard/agent/customers",
       icon: FaUsers,
@@ -59,6 +67,12 @@ const AgentDashboardLayout = () => {
       href: "/dashboard/agent/blogs",
       icon: FaBlog,
       current: location.pathname.includes("/dashboard/agent/blogs"),
+    },
+    {
+      name: "FAQs & Forum",
+      href: "/dashboard/agent/faqs-forum",
+      icon: FaQuestionCircle,
+      current: location.pathname.includes("/faqs-forum"),
     },
   ];
 

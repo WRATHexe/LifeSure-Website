@@ -29,9 +29,12 @@ import CustomerPolicies from "../pages/Dashboard/Customer/Policies";
 import CustomerReviews from "../pages/Dashboard/Customer/Reviews";
 import CustomerDashboard from "../pages/Dashboard/CustomerDashboard";
 import Profile from "../pages/Dashboard/Profile";
+import AllAgents from "../pages/General/AllAgents";
+import BeAgentApplication from "../pages/Dashboard/Customer/BeAgentApplication";
+import AllArticles from "../pages/General/AllArticles";
 import PolicyDetails from "../pages/General/PolicyDetails";
 import QuotePage from "../pages/General/QuotePage";
-
+import FAQsAndForum from "../pages/Dashboard/FAQs&Forum";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -42,6 +45,8 @@ export const router = createBrowserRouter([
       { path: "register", element: <Register /> },
       { path: "policies", element: <AllPolicies /> },
       { path: "policies/:id", element: <PolicyDetails /> },
+      { path: "agents", element: <AllAgents /> },
+      { path: "blogs", element: <AllArticles /> },
       {
         path: "application/:policyId",
         element: (
@@ -71,6 +76,7 @@ export const router = createBrowserRouter([
       { path: "transactions", element: <AdminTransactions /> },
       { path: "agents", element: <AdminAgents /> },
       { path: "profile", element: <Profile /> },
+      { path: "faqs-forum", element: <FAQsAndForum /> },
     ],
   },
 
@@ -88,6 +94,7 @@ export const router = createBrowserRouter([
       { path: "blogs", element: <AgentBlogs /> },
       { path: "blogs/create", element: <CreateBlogPost /> },
       { path: "profile", element: <Profile /> },
+      { path: "faqs-forum", element: <FAQsAndForum /> },
     ],
   },
 
@@ -107,6 +114,8 @@ export const router = createBrowserRouter([
       { path: "claims", element: <CustomerClaims /> },
       { path: "reviews", element: <CustomerReviews /> },
       { path: "profile", element: <Profile /> },
+      { path: "be-agent", element: <BeAgentApplication /> },
+      { path: "faqs-forum", element: <FAQsAndForum /> },
     ],
   },
 ]);

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 import { Link, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import UseAuth from "../../hooks/useAuth";
@@ -11,6 +12,7 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
+
   const handleLogout = async () => {
     try {
       await logOut();
@@ -43,7 +45,7 @@ const Navbar = () => {
       { name: "Home", path: "/" },
       { name: "All Policies", path: "/policies" },
       { name: "Agents", path: "/agents" },
-      { name: "Articles", path: "/blog" },
+      { name: "Blogs", path: "/blogs" },
     ];
 
     // Only add Dashboard if user and user.role are available
@@ -57,14 +59,13 @@ const Navbar = () => {
         dashboardPath = "/dashboard/customer";
       baseLinks.push({ name: "Dashboard", path: dashboardPath });
     }
-
     return baseLinks;
   };
 
   const navLinks = getNavLinks();
 
-  // Show loading if still fetching profile
-  if (loading || (user && !_userProfile?.user?.role) || profileLoading) {
+  // Only block navbar if auth is loading (not profile)
+  if (loading) {
     return (
       <nav className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-white/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -81,7 +82,7 @@ const Navbar = () => {
     <nav className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-white/20 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Enhanced Logo */}
+          {/* Logo */}
           <Link to="/" className="flex items-center group">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <span className="text-white font-bold text-lg">L</span>
@@ -108,160 +109,42 @@ const Navbar = () => {
           </div>
 
           {/* User Menu */}
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                  >
-                    <div className="flex items-center space-x-3 px-4 py-2 border border-gray-200 rounded-full hover:border-blue-300 hover:shadow-md transition-all duration-200">
-                      <img
-                        className="h-8 w-8 rounded-full object-cover border-2 border-blue-100"
-                        src={
-                          user?.photoURL ||
-                          "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-                        }
-                        alt={user.displayName || "User"}
-                      />
-                      <div className="text-left">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-32">
-                          {user.displayName || "User"}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate max-w-32">
-                          {user.email}
-                        </div>
-                      </div>
-                      <svg
-                        className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                          isProfileOpen ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </button>
-
-                  {/* Enhanced Dropdown Menu */}
-                  {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg py-2 ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 scale-100 opacity-100">
-                      {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {user.displayName || "User"}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {user.email}
-                        </p>
-                      </div>
-
-                      {/* Menu Items */}
-                      <div className="py-1">
-                        <Link
-                          to={
-                            _userProfile?.user?.role === "admin"
-                              ? "/dashboard/admin"
-                              : _userProfile?.user?.role === "agent"
-                              ? "/dashboard/agent"
-                              : "/dashboard/customer"
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              profileLoading ? (
+                // Show spinner while profile is loading
+                <div className="flex items-center px-4 py-2">
+                  <FaSpinner className="animate-spin text-blue-500 h-6 w-6" />
+                  <span className="ml-2 text-gray-500 text-sm">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    >
+                      <div className="flex items-center space-x-3 px-4 py-2 border border-gray-200 rounded-full hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                        <img
+                          className="h-8 w-8 rounded-full object-cover border-2 border-blue-100"
+                          src={
+                            user?.photoURL ||
+                            "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
                           }
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <svg
-                            className="w-4 h-4 mr-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                          </svg>
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/profile"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <svg
-                            className="w-4 h-4 mr-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            />
-                          </svg>
-                          Profile Settings
-                        </Link>
-                        <Link
-                          to="/my-policies"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <svg
-                            className="w-4 h-4 mr-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          My Policies
-                        </Link>
-                        <Link
-                          to="/notifications"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <svg
-                            className="w-4 h-4 mr-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M15 17h5l-5 5v-5zM10.621 7.621a2.829 2.829 0 114 4 2.829 2.829 0 01-4-4z"
-                            />
-                          </svg>
-                          Notifications
-                        </Link>
-                      </div>
-
-                      <hr className="my-1 border-gray-100" />
-
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                      >
+                          alt={user.displayName || "User"}
+                        />
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-32">
+                            {user.displayName || "User"}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate max-w-32">
+                            {user.email}
+                          </div>
+                        </div>
                         <svg
-                          className="w-4 h-4 mr-3"
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                            isProfileOpen ? "rotate-180" : ""
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -270,31 +153,164 @@ const Navbar = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            d="M19 9l-7 7-7-7"
                           />
                         </svg>
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <Link
-                    to="/login"
-                    className="text-gray-700 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-blue-50"
+                      </div>
+                    </button>
+
+                    {/* Enhanced Dropdown Menu */}
+                    {isProfileOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg py-2 ring-1 ring-black ring-opacity-5 focus:outline-none transform transition-all duration-200 scale-100 opacity-100">
+                        {/* User Info Header */}
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {user.displayName || "User"}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="py-1">
+                          <Link
+                            to={
+                              _userProfile?.user?.role === "admin"
+                                ? "/dashboard/admin"
+                                : _userProfile?.user?.role === "agent"
+                                ? "/dashboard/agent"
+                                : "/dashboard/customer"
+                            }
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                              />
+                            </svg>
+                            Dashboard
+                          </Link>
+                          <Link
+                            to="/profile"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                            Profile Settings
+                          </Link>
+                          <Link
+                            to="/my-policies"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            My Policies
+                          </Link>
+                          <Link
+                            to="/notifications"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 17h5l-5 5v-5zM10.621 7.621a2.829 2.829 0 114 4 2.829 2.829 0 01-4-4z"
+                              />
+                            </svg>
+                            Notifications
+                          </Link>
+                        </div>
+
+                        <hr className="my-1 border-gray-100" />
+
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {/* Logout button beside profile */}
+                  <button
+                    onClick={handleLogout}
+                    className="ml-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all duration-200"
                   >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-                  >
-                    Get Started
-                  </Link>
-                </div>
-              )}
-            </div>
+                    Sign Out
+                  </button>
+                </>
+              )
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/login"
+                  className="text-gray-700 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-blue-50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
