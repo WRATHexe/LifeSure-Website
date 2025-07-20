@@ -8,6 +8,7 @@ import {
   FaCreditCard,
   FaFileContract,
   FaHome,
+  FaQuestionCircle,
   FaSignOutAlt,
   FaTachometerAlt,
   FaTimes,
@@ -46,6 +47,12 @@ const AdminDashboardLayout = () => {
       current: location.pathname === "/dashboard/admin",
     },
     {
+      name: "Profile",
+      href: "/dashboard/admin/profile",
+      icon: FaUserTie,
+      current: location.pathname === "/dashboard/admin/profile",
+    },
+    {
       name: "Manage Applications",
       href: "/dashboard/admin/applications",
       icon: FaClipboardList,
@@ -74,6 +81,12 @@ const AdminDashboardLayout = () => {
       href: "/dashboard/admin/agents",
       icon: FaUserTie,
       current: location.pathname.includes("/dashboard/admin/agents"),
+    },
+    {
+      name: "FAQs & Forum",
+      href: "/dashboard/admin/faqs-forum",
+      icon: FaQuestionCircle,
+      current: location.pathname.includes("/faqs-forum"),
     },
   ];
 

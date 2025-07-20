@@ -73,13 +73,13 @@ const Applications = () => {
     mutationFn: async ({ applicationId, feedback }) => {
       const response = await axiosSecure.patch(
         `/admin/applications/${applicationId}/reject`,
-        { feedback }
+        { reason: feedback } // <-- send as 'reason'
       );
       return response.data;
     },
     onSuccess: () => {
       toast.success("Application rejected with feedback!");
-      setShowRejectModal(false); // <-- add this
+      setShowRejectModal(false);
       queryClient.invalidateQueries(["applications"]);
     },
     onError: (error) => {
@@ -100,16 +100,17 @@ const Applications = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      Pending: {
+      pending: {
         bg: "bg-yellow-100",
         text: "text-yellow-800",
         icon: FaSpinner,
       },
-      Approved: { bg: "bg-green-100", text: "text-green-800", icon: FaCheck },
-      Rejected: { bg: "bg-red-100", text: "text-red-800", icon: FaTimes },
+      approved: { bg: "bg-green-100", text: "text-green-800", icon: FaCheck },
+      rejected: { bg: "bg-red-100", text: "text-red-800", icon: FaTimes },
     };
 
-    const config = statusConfig[status] || statusConfig.Pending;
+    const config =
+      statusConfig[status?.toLowerCase()] || statusConfig["pending"];
     const Icon = config.icon;
 
     return (
@@ -199,7 +200,7 @@ const Applications = () => {
               {
                 title: "Pending",
                 value: safeApplications.filter(
-                  (app) => app.status === "Pending"
+                  (app) => app.status === "pending"
                 ).length,
                 icon: FaSpinner,
                 color: "yellow",
@@ -207,7 +208,7 @@ const Applications = () => {
               {
                 title: "Approved",
                 value: safeApplications.filter(
-                  (app) => app.status === "Approved"
+                  (app) => app.status === "approved"
                 ).length,
                 icon: FaCheck,
                 color: "green",
@@ -215,7 +216,7 @@ const Applications = () => {
               {
                 title: "Rejected",
                 value: safeApplications.filter(
-                  (app) => app.status === "Rejected"
+                  (app) => app.status === "rejected"
                 ).length,
                 icon: FaTimes,
                 color: "red",
@@ -344,9 +345,11 @@ const Applications = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            {/* Assign Agent */}
-                            {application.status === "Pending" &&
-                              !application.assignedAgent && (
+                            {/* Show action buttons only if status is pending */}
+                            {application.status?.toLowerCase() ===
+                              "pending" && (
+                              <>
+                                {/* Assign Agent */}
                                 <div className="flex items-center space-x-2">
                                   <select
                                     value={selectedAgent[application._id] || ""}
@@ -382,28 +385,26 @@ const Applications = () => {
                                     )}
                                   </button>
                                 </div>
-                              )}
-
-                            {/* Reject Button */}
-                            {application.status === "Pending" && (
-                              <button
-                                onClick={() => {
-                                  setRejectingAppId(application._id);
-                                  setShowRejectModal(true);
-                                  setFeedback(""); // reset feedback
-                                }}
-                                disabled={rejectApplicationMutation.isLoading}
-                                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-                              >
-                                {rejectApplicationMutation.isLoading ? (
-                                  <FaSpinner className="animate-spin h-3 w-3" />
-                                ) : (
-                                  <>
-                                    <FaTimes className="h-3 w-3 mr-1" />
-                                    Reject
-                                  </>
-                                )}
-                              </button>
+                                {/* Reject Button */}
+                                <button
+                                  onClick={() => {
+                                    setRejectingAppId(application._id);
+                                    setShowRejectModal(true);
+                                    setFeedback(""); // reset feedback
+                                  }}
+                                  disabled={rejectApplicationMutation.isLoading}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                                >
+                                  {rejectApplicationMutation.isLoading ? (
+                                    <FaSpinner className="animate-spin h-3 w-3" />
+                                  ) : (
+                                    <>
+                                      <FaTimes className="h-3 w-3 mr-1" />
+                                      Reject
+                                    </>
+                                  )}
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>

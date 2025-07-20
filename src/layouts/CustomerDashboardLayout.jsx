@@ -7,10 +7,12 @@ import {
   FaCreditCard,
   FaFileContract,
   FaHome,
+  FaQuestionCircle,
   FaSignOutAlt,
   FaStar,
   FaTimes,
   FaUserShield,
+  FaUserTie,
 } from "react-icons/fa";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { toast } from "react-toastify";
@@ -51,6 +53,12 @@ const CustomerDashboardLayout = () => {
       current: location.pathname === "/dashboard/customer",
     },
     {
+      name: "Profile",
+      href: "/dashboard/customer/profile",
+      icon: FaUserTie,
+      current: location.pathname === "/dashboard/customer/profile",
+    },
+    {
       name: "My Policies",
       href: "/dashboard/customer/policies",
       icon: FaFileContract,
@@ -73,6 +81,18 @@ const CustomerDashboardLayout = () => {
       href: "/dashboard/customer/reviews",
       icon: FaStar,
       current: location.pathname.includes("/dashboard/customer/reviews"),
+    },
+    {
+      name: "Be An Agent",
+      href: "/dashboard/customer/be-agent",
+      icon: FaUserTie,
+      current: location.pathname.includes("/dashboard/customer/be-agent"),
+    },
+    {
+      name: "FAQs & Forum",
+      href: "/dashboard/customer/faqs-forum",
+      icon: FaQuestionCircle,
+      current: location.pathname.includes("/faqs-forum"),
     },
   ];
 
